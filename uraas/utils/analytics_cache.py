@@ -4,10 +4,10 @@ Thread-safe in-memory cache with TTL for expensive analytics computations.
 Invalidated on crawl completion.
 """
 
+import logging
 import threading
 import time
-import logging
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ _DEFAULT_TTL = 1800  # 30 minutes
 
 
 class _CacheEntry:
-    __slots__ = ('value', 'expires_at')
+    __slots__ = ("value", "expires_at")
 
     def __init__(self, value: Any, ttl: int):
         self.value = value
@@ -64,7 +64,9 @@ class AnalyticsCache:
             keys = [k for k in self._store if k.startswith(prefix)]
             for k in keys:
                 del self._store[k]
-            log.debug("Invalidated %d cache entries with prefix '%s'", len(keys), prefix)
+            log.debug(
+                "Invalidated %d cache entries with prefix '%s'", len(keys), prefix
+            )
 
     @property
     def size(self) -> int:

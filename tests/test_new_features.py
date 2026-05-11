@@ -7,12 +7,13 @@ Test script for new Scopus-competitive features:
 
 import sys
 import time
-from uraas.database import SessionLocal, Item, Author, Base, engine
-from uraas.services.citation_tracker import (
-    CitationTracker, Citation, CitationMetrics, AuthorMetrics,
-    get_paper_citations, get_author_bibliometrics
-)
+
+from uraas.database import Author, Base, Item, SessionLocal, engine
 from uraas.services.advanced_search import SearchQuery
+from uraas.services.citation_tracker import (AuthorMetrics, Citation,
+                                             CitationMetrics, CitationTracker,
+                                             get_author_bibliometrics,
+                                             get_paper_citations)
 
 # Create new tables
 print("=" * 70)
@@ -34,21 +35,21 @@ paper = session.query(Item).filter(Item.doi.isnot(None)).first()
 if paper:
     print(f"\nTesting with paper: {paper.title[:60]}...")
     print(f"DOI: {paper.doi}")
-    
+
     print("\nFetching citations from OpenAlex...")
     success = CitationTracker.update_paper_citations(paper.id)
-    
+
     if success:
         print("✓ Citations fetched successfully")
-        
+
         # Get citation data
         cite_data = get_paper_citations(paper.id)
         print(f"\nCitation count: {cite_data['citation_count']}")
         print(f"Citing papers in our DB: {len(cite_data['citing_papers'])}")
-        
-        if cite_data['citing_papers']:
+
+        if cite_data["citing_papers"]:
             print("\nSample citing papers:")
-            for cite in cite_data['citing_papers'][:3]:
+            for cite in cite_data["citing_papers"][:3]:
                 print(f"  - {cite['title'][:60]}... ({cite['year']})")
     else:
         print("⚠ Citation fetch failed (paper may not be in OpenAlex)")
@@ -76,10 +77,10 @@ author = session.query(Author).join(Author.items).first()
 
 if author:
     print(f"\nTesting with author: {author.name}")
-    
+
     # Update author metrics
     success = CitationTracker.update_author_metrics(author.id)
-    
+
     if success:
         metrics = get_author_bibliometrics(author.id)
         print(f"\nAuthor Bibliometrics:")
@@ -100,11 +101,11 @@ print("=" * 70)
 
 # Test query parsing
 test_queries = [
-    'machine learning',
+    "machine learning",
     '"machine learning" AND author:smith',
-    'title:cancer NOT lung',
-    'author:okonkwo AND year:2020',
-    '(covid OR pandemic) AND faculty:medicine'
+    "title:cancer NOT lung",
+    "author:okonkwo AND year:2020",
+    "(covid OR pandemic) AND faculty:medicine",
 ]
 
 print("\nQuery Parsing Tests:")
@@ -120,19 +121,19 @@ print("=" * 70)
 
 # Test 1: Simple keyword search
 print("\n1. Simple keyword search: 'health'")
-results = SearchQuery.execute_search('health', limit=5)
+results = SearchQuery.execute_search("health", limit=5)
 print(f"   Found {results['total']} papers in {results['took_ms']}ms")
-if results['results']:
+if results["results"]:
     print(f"   Top result: {results['results'][0]['title'][:60]}...")
 
 # Test 2: Field-specific search
 print("\n2. Field-specific search: 'year:2020'")
-results = SearchQuery.execute_search('year:2020', limit=5)
+results = SearchQuery.execute_search("year:2020", limit=5)
 print(f"   Found {results['total']} papers from 2020")
 
 # Test 3: Boolean AND
 print("\n3. Boolean AND: 'health AND education'")
-results = SearchQuery.execute_search('health AND education', limit=5)
+results = SearchQuery.execute_search("health AND education", limit=5)
 print(f"   Found {results['total']} papers")
 
 # Test 4: Phrase search
@@ -142,22 +143,24 @@ print(f"   Found {results['total']} papers")
 
 # Test 5: Complex query
 print("\n5. Complex query: 'author:okonkwo AND faculty:science'")
-results = SearchQuery.execute_search('author:okonkwo AND faculty:science', limit=5)
+results = SearchQuery.execute_search("author:okonkwo AND faculty:science", limit=5)
 print(f"   Found {results['total']} papers")
 
 # Test 6: Sort by date
 print("\n6. Sort by date: 'health' sorted by publication date")
-results = SearchQuery.execute_search('health', limit=5, sort_by='date')
+results = SearchQuery.execute_search("health", limit=5, sort_by="date")
 print(f"   Found {results['total']} papers")
-if results['results']:
-    print(f"   Most recent: {results['results'][0]['title'][:60]}... ({results['results'][0]['year']})")
+if results["results"]:
+    print(
+        f"   Most recent: {results['results'][0]['title'][:60]}... ({results['results'][0]['year']})"
+    )
 
 # Test autocomplete
 print("\n" + "=" * 70)
 print("Autocomplete Suggestions:")
 print("=" * 70)
 
-test_partials = ['health', 'machine', 'science']
+test_partials = ["health", "machine", "science"]
 for partial in test_partials:
     suggestions = SearchQuery.get_search_suggestions(partial)
     print(f"\n'{partial}' → {len(suggestions)} suggestions")
