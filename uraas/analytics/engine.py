@@ -23,12 +23,22 @@ from sqlalchemy import desc, extract, func, or_
 from sqlalchemy.orm import joinedload
 
 from uraas.config.institutions import get_registry
-from uraas.database import (Author, Collection, Community, File, Item,
-                            SessionLocal, db_year, db_year_month)
-from uraas.utils.ai_classifier import (SPECIAL_COLLECTIONS,
-                                       classify_special_collections,
-                                       extract_keywords,
-                                       extract_trends_from_corpus)
+from uraas.database import (
+    Author,
+    Collection,
+    Community,
+    File,
+    Item,
+    SessionLocal,
+    db_year,
+    db_year_month,
+)
+from uraas.utils.ai_classifier import (
+    SPECIAL_COLLECTIONS,
+    classify_special_collections,
+    extract_keywords,
+    extract_trends_from_corpus,
+)
 from uraas.utils.analytics_cache import analytics_cache
 from uraas.utils.unilag_classifier import classifier
 

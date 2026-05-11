@@ -9,8 +9,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 import requests
-from sqlalchemy import (Column, DateTime, Float, ForeignKey, Integer, String,
-                        Text)
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from uraas.database import Author, Base, Item, SessionLocal

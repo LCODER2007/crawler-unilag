@@ -10,8 +10,7 @@ Supports the APA Intelligence & Analytics Platform:
 
 from datetime import datetime
 
-from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Index,
-                        Integer)
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer
 from sqlalchemy import String
 from sqlalchemy import String as SAString
 from sqlalchemy import Table, Text, cast, create_engine, extract, func
