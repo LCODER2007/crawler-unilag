@@ -10,7 +10,8 @@ from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import and_, func, not_, or_, text
 
-from uraas.database import Author, Collection, Community, Item, SessionLocal, db_year
+from uraas.database import (Author, Collection, Community, Item, SessionLocal,
+                            db_year)
 
 logger = logging.getLogger(__name__)
 

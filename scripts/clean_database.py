@@ -26,7 +26,8 @@ def run_cleanup(dry_run: bool = False):
     from sqlalchemy import func
 
     from uraas.config.institutions import get_registry
-    from uraas.database import Author, Collection, Community, Item, SessionLocal
+    from uraas.database import (Author, Collection, Community, Item,
+                                SessionLocal)
 
     registry = get_registry()
     valid_inst_names = {c.name for c in registry.list_all()}

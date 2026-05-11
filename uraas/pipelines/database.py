@@ -2,12 +2,11 @@
 import re
 from datetime import date
 
-from uraas.database import Author, Collection, Community, File, Item, SessionLocal
-from uraas.utils.ai_classifier import (
-    _clean_text,
-    classify_special_collections,
-    extract_keywords,
-)
+from uraas.database import (Author, Collection, Community, File, Item,
+                            SessionLocal)
+from uraas.utils.ai_classifier import (_clean_text,
+                                       classify_special_collections,
+                                       extract_keywords)
 from uraas.utils.analytics_cache import analytics_cache
 from uraas.utils.pdf_downloader import pdf_downloader
 from uraas.utils.unilag_classifier import classifier

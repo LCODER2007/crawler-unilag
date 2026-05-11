@@ -9,15 +9,8 @@ from typing import Dict, List, Optional
 from sqlalchemy import distinct, func
 from sqlalchemy.orm import aliased
 
-from uraas.database import (
-    Author,
-    Collection,
-    Community,
-    File,
-    Item,
-    SessionLocal,
-    item_authors,
-)
+from uraas.database import (Author, Collection, Community, File, Item,
+                            SessionLocal, item_authors)
 
 
 class InstitutionProfile:

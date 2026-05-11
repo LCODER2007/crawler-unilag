@@ -10,14 +10,10 @@ import time
 
 from uraas.database import Author, Base, Item, SessionLocal, engine
 from uraas.services.advanced_search import SearchQuery
-from uraas.services.citation_tracker import (
-    AuthorMetrics,
-    Citation,
-    CitationMetrics,
-    CitationTracker,
-    get_author_bibliometrics,
-    get_paper_citations,
-)
+from uraas.services.citation_tracker import (AuthorMetrics, Citation,
+                                             CitationMetrics, CitationTracker,
+                                             get_author_bibliometrics,
+                                             get_paper_citations)
 
 # Create new tables
 print("=" * 70)

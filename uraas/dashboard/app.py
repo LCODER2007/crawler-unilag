@@ -12,16 +12,8 @@ from sqlalchemy import desc, extract, func, or_
 
 from uraas.analytics.engine import analytics
 from uraas.config import config
-from uraas.database import (
-    Author,
-    Collection,
-    Community,
-    File,
-    Item,
-    SessionLocal,
-    db_year,
-    db_year_month,
-)
+from uraas.database import (Author, Collection, Community, File, Item,
+                            SessionLocal, db_year, db_year_month)
 from uraas.utils.analytics_cache import analytics_cache
 from uraas.utils.docid_generator import docid_generator
 
