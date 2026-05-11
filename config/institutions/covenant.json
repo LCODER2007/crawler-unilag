@@ -1,0 +1,29 @@
+{
+  "ror": "https://ror.org/00frr1n84",
+  "name": "Covenant University",
+  "short_name": "Covenant",
+  "country": "Nigeria",
+  "staff_file": "data/covenant_staff.json",
+  "affiliation_patterns": [
+    "Covenant University",
+    "Covenant Univ",
+    "Covenant Univ.",
+    "@covenantuniversity.edu.ng",
+    "Canaanland Ota",
+    "Covenant University Ota",
+    "CU Ota"
+  ],
+  "faculties": [
+    "College of Science and Technology",
+    "College of Business and Social Sciences",
+    "College of Human Development",
+    "College of Engineering",
+    "School of Postgraduate Studies"
+  ],
+  "crawler_settings": {
+    "rate_limit": 2.0,
+    "concurrent_requests": 8,
+    "retry_times": 3,
+    "download_delay": 2.0
+  }
+}

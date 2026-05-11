@@ -1,54 +1,67 @@
-# URAAS - University Repository Archival & Analytics System
+# URAAS - APA Intelligence & Analytics Platform
 
-World-class institutional repository harvester for the University of Lagos (UNILAG). Automatically discovers, validates, downloads, and classifies academic publications from UNILAG faculty across multiple sources.
+**World-class institutional repository intelligence system for African universities.** Built for the Africa PID Alliance, this platform provides strategic research intelligence, multi-institution comparison, and indigenous knowledge tracking.
 
-## 🎯 Key Features
+## 🎯 Core Features (APA Intelligence Platform)
 
-- **Staff-Validated Harvesting**: Only captures papers from confirmed UNILAG staff members (no false positives)
-- **Multi-Source Discovery**: Harvests from arXiv, Google Scholar, OpenAlex, Crossref, and UNILAG faculty directories
-- **Intelligent Deduplication**: DOI-based, URL-based, and fuzzy title matching (95% threshold)
-- **Local PDF Storage**: Downloads and stores PDFs locally with SHA256 verification
-- **Smart Access Control**: Uses Unpaywall to determine legal open-access status (Gold/Green/Bronze)
-- **Comprehensive Classification**: Maps papers to all 12 UNILAG faculties and 80+ departments
-- **Real-Time Dashboard**: Live crawler monitoring with WebSocket updates
-- **High-Impact Alerts**: Automatic notifications for publications in top-tier journals
+### Multi-Institution Comparator Engine
+- Compare 2-10 African institutions simultaneously
+- Strategic metrics: TK Vitality, Linguistic Diversity, Patent Velocity
+- Rankings across research volume, OA adoption, innovation commercialization
+- Senate report generation (JSON, CSV, PDF)
+- Collaboration mesh visualization
+
+### Novel African-Focused Metrics
+- **TK Vitality Score**: Indigenous knowledge preservation tracking
+- **Linguistic Diversity Index**: African language research output measurement
+- **Patent Velocity Tracker**: Innovation commercialization timeline analysis
+- **DocID Coverage**: Africa PID Alliance identifier adoption rate
+
+### Research Intelligence
+- Staff-validated harvesting (946 UNILAG staff members)
+- Multi-source discovery (arXiv, Scholar, OpenAlex, Crossref, ORCID)
+- Intelligent deduplication (DOI, URL, fuzzy title matching)
+- Local PDF storage with SHA256 verification
+- Smart access control via Unpaywall integration
+
+### Real-Time Dashboard
+- Live crawler monitoring with WebSocket updates
+- Multi-institution comparison interface
+- Interactive analytics with D3.js visualizations
+- Faculty/department hierarchical navigation
+- Advanced Boolean search (Scopus-style operators)
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    URAAS PIPELINE                           │
+│           APA INTELLIGENCE & ANALYTICS PLATFORM             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Phase 0: Faculty Seeding                                  │
-│  └─ Crawl UNILAG website → Extract staff names             │
-│                                                             │
-│  Phase 1: Multi-Source Discovery                           │
-│  ├─ arXiv Spider                                           │
-│  ├─ Google Scholar Spider (with proxy rotation)           │
-│  ├─ OpenAlex Spider (ROR-based)                           │
-│  └─ Crossref Spider                                        │
-│                                                             │
-│  Phase 2: Validation Pipeline                              │
+│  Layer 1: Data Ingestion                                   │
+│  ├─ Multi-Source Crawlers (arXiv, Scholar, OpenAlex)      │
+│  ├─ DocID Repository Crawler (ir.unilag.edu.ng)           │
 │  ├─ Staff Validator (fuzzy name matching)                 │
-│  ├─ Affiliation Filter (UNILAG patterns)                  │
-│  └─ Unpaywall Enrichment (OA status)                      │
+│  └─ Affiliation Filter (ROR-based)                        │
 │                                                             │
-│  Phase 3: Deduplication                                    │
-│  ├─ DOI exact match                                        │
-│  ├─ URL exact match                                        │
-│  └─ Fuzzy title match (95% threshold)                     │
+│  Layer 2: Intelligence Engine                              │
+│  ├─ TK Vitality Score Calculator                          │
+│  ├─ Linguistic Diversity Analyzer                         │
+│  ├─ Patent Velocity Tracker                               │
+│  ├─ Multi-Institution Comparator                          │
+│  └─ Collaboration Network Builder                         │
 │                                                             │
-│  Phase 4: Storage & Classification                         │
-│  ├─ Download PDF to local storage                         │
-│  ├─ Classify into Faculty/Department                      │
-│  ├─ Store metadata (Dublin Core)                          │
-│  └─ Generate high-impact alerts                           │
+│  Layer 3: Strategic Reporting                              │
+│  ├─ Senate Report Generator                               │
+│  ├─ Rankings & Insights Engine                            │
+│  ├─ Gap Analysis (vs peer institutions)                   │
+│  └─ Recommendations Generator                             │
 │                                                             │
-│  Phase 5: Analytics & Dashboard                            │
-│  ├─ Top authors ranking                                    │
-│  ├─ Collaboration network analysis                        │
-│  └─ Real-time crawler monitoring                          │
+│  Layer 4: Presentation                                     │
+│  ├─ Interactive Dashboard (Flask + D3.js)                 │
+│  ├─ REST API (JSON responses)                             │
+│  ├─ Export Formats (CSV, BibTeX, JSON, PDF)              │
+│  └─ Real-Time Updates (WebSocket)                         │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -56,9 +69,9 @@ World-class institutional repository harvester for the University of Lagos (UNIL
 ## 📋 Prerequisites
 
 - Python 3.9+
-- PostgreSQL 15+ (optional, SQLite works for development)
-- Redis 7+ (optional, for Celery)
+- PostgreSQL 15+ (or SQLite for development)
 - 10GB+ free disk space for PDF storage
+- Modern web browser (Chrome, Firefox, Edge)
 
 ## 🚀 Quick Start
 
@@ -78,237 +91,412 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env with your settings
-```
-
-Key configuration options:
-```env
-DATABASE_URL=sqlite:///uraas.db  # or postgresql://user:pass@localhost/uraas_db
-STORAGE_PATH=./storage/pdfs
-RATE_LIMIT_DELAY=2.0
-DASHBOARD_PORT=8080
-```
-
-### 3. Initialize Database
+### 2. Initialize Database
 
 ```bash
 python init_db.py
 ```
 
-This creates all tables and seeds the database with UNILAG's 12 faculties and 80+ departments.
+This creates all tables, seeds UNILAG's 12 faculties and 80+ departments, and prepares the ROR-based multi-institution schema.
 
-### 4. Start the Dashboard
+### 3. Start the Dashboard
 
 ```bash
-python uraas/dashboard/app.py
+python start_dashboard.py
 ```
 
 Open http://localhost:8080 in your browser.
 
-### 5. Run the Crawler
+### 4. Navigate to Comparator Tab
 
-**IMPORTANT**: Use the aggressive crawler that searches up to 3000 pages:
+Press **5** or click the **Comparator** tab to access the Multi-Institution Comparison Engine.
+
+## 🎛️ Dashboard Features
+
+### Tab 1: Crawler
+- Start/stop research paper mining
+- Live terminal feed with WebSocket updates
+- DocID™ repository crawler for institutional archives
+- Recently harvested papers display
+
+### Tab 2: Archive
+- Hierarchical view: Faculty → Department → Papers
+- 988 UNILAG papers indexed
+- CSV and BibTeX export
+- Full-text search
+
+### Tab 3: Search
+- Advanced Boolean operators (AND, OR, NOT)
+- Field-specific queries (author:, year:, faculty:, doi:)
+- Phrase matching with quotes
+- Open Access filtering
+
+### Tab 4: Analytics
+- Publications by year/faculty
+- Top authors ranking
+- SDG alignment analysis
+- Research trends tracking
+- Collaboration networks
+- Language research identification
+
+### Tab 5: Comparator (NEW - APA Core Feature)
+- Multi-institution comparison (2-10 institutions)
+- Strategic metrics dashboard
+- Rankings across all dimensions
+- Senate report generation
+- Collaboration mesh visualization
+- Strategic insights & recommendations
+
+## 🌍 Multi-Institution Comparator
+
+### How to Use
+
+1. Navigate to **Comparator** tab (press 5)
+2. Add institutions by ROR ID or use quick-add dropdown
+3. Click **Run Comparison**
+4. View results:
+   - Executive summary cards
+   - Detailed comparison matrix
+   - Rankings (volume, OA, TK, patents)
+   - Strategic insights
+   - Collaboration network
+
+### Comparison Metrics
+
+For each institution:
+- **Total Papers**: Research volume
+- **Total Authors**: Unique researchers
+- **OA Rate**: Open access adoption percentage
+- **TK Rate**: Indigenous knowledge preservation percentage
+- **Patent Rate**: Innovation commercialization percentage
+- **African Language Rate**: Linguistic diversity percentage
+- **Growth Rate**: 3-year publication growth
+- **Papers per Author**: Productivity ratio
+- **Patents per 100 Papers**: Innovation efficiency
+- **DocID Coverage**: PID adoption rate
+
+### Senate Report
+
+Generate comprehensive reports for university leadership:
+- Executive summary
+- Detailed comparison matrix
+- Rankings across all metrics
+- Strategic insights
+- Recommendations
+- Collaboration network data
+
+**Export Formats**: JSON (implemented), CSV (TODO), PDF (TODO)
+
+## 📊 Novel African-Focused Metrics
+
+### TK Vitality Score
+
+Measures indigenous knowledge preservation efforts.
+
+**Formula**: Weighted sum of content types / total items × 100
+
+**Content Type Weights**:
+- Indigenous Knowledge: 3.0
+- Cultural Heritage: 2.5
+- Oral Tradition: 2.5
+- Grey Literature: 1.5
+- Thesis: 1.2
+- Dataset: 1.2
+- Patent: 1.0
+- Research Paper: 0.5
+
+**Interpretation**:
+- 60-100: Excellent cultural preservation
+- 30-59: Good indigenous knowledge focus
+- 0-29: Opportunity for growth
+
+**API Endpoint**: `GET /api/analytics/tk-vitality-score`
+
+### Linguistic Diversity Index
+
+Tracks research outputs in African languages.
+
+**Formula**: African language outputs / total outputs × 100
+
+**Supported Languages**: Yoruba, Igbo, Hausa, Swahili, Amharic, Somali, Kinyarwanda, Zulu, Xhosa, Afrikaans, and 10+ more
+
+**Strategic Value**: Measures decolonization of knowledge production
+
+**API Endpoint**: `GET /api/analytics/linguistic-diversity-index`
+
+### Patent Velocity Tracker
+
+Analyzes innovation commercialization timelines.
+
+**Formula**: Average(Patent date - Publication date)
+
+**Interpretation**:
+- < 1 year: Fast movers (rapid innovation)
+- 1-2 years: Standard pipeline
+- 2-5 years: Slow (opportunity for improvement)
+- > 5 years: Very slow (IP management issues)
+
+**API Endpoint**: `GET /api/analytics/patent-velocity`
+
+### DocID Coverage
+
+Tracks Africa PID Alliance identifier adoption.
+
+**Formula**: Papers with DocID / total papers × 100
+
+**API Endpoint**: `GET /api/analytics/docid-coverage`
+
+## 🔌 API Endpoints
+
+### Comparator Endpoints
 
 ```bash
-# Recommended: Use the aggressive crawler
-python crawl_aggressive.py --target 10
+# Compare institutions
+POST /api/comparator/compare
+Body: {"ror_ids": ["https://ror.org/03qcnxw14", "https://ror.org/01js2sh04"]}
 
-# Or use the launcher
-python run_aggressive_crawler.py --target 10
+# Get collaboration network
+POST /api/comparator/collaboration-mesh
+Body: {"ror_ids": ["ror1", "ror2"]}
+
+# Generate senate report
+POST /api/comparator/senate-report
+Body: {"ror_ids": ["ror1", "ror2"], "format": "json"}
 ```
 
-You can also use the dashboard interface by clicking "Start Mining".
+### Analytics Endpoints
 
-## 📊 Database Schema
+```bash
+# TK Vitality Score
+GET /api/analytics/tk-vitality-score
 
-### Communities (Faculties)
-- Faculty of Arts
-- Faculty of Science
-- Faculty of Engineering
-- College of Medicine
-- Faculty of Pharmacy
-- Faculty of Dental Sciences
-- Faculty of Basic Medical Sciences
-- Faculty of Social Sciences
-- Faculty of Law
-- Faculty of Education
-- Faculty of Environmental Sciences
-- Faculty of Management Sciences
+# Linguistic Diversity Index
+GET /api/analytics/linguistic-diversity-index
 
-### Collections (Departments)
-80+ departments mapped with keyword-based classification.
+# Patent Velocity
+GET /api/analytics/patent-velocity
 
-### Items (Publications)
-Dublin Core metadata schema:
-- `dc.title` - Paper title
-- `dc.identifier.doi` - DOI
-- `dc.identifier.uri` - Persistent URL
-- `dc.description.provenance` - Harvest metadata
-- `dc.rights` - Access rights (Public/Private)
+# DocID Coverage
+GET /api/analytics/docid-coverage
 
-### Files (Bitstreams)
-- Local file path
-- SHA256 hash
-- Access policy (based on Unpaywall OA status)
-- Download timestamp
+# Overview stats
+GET /api/analytics/overview
 
-## 🔍 How Staff Validation Works
+# Publications by year
+GET /api/analytics/publications-by-year
 
-URAAS uses a **multi-stage validation** to ensure ZERO false positives:
+# Top authors
+GET /api/analytics/top-authors?limit=20
+```
 
-1. **Faculty Directory Seeding**: Crawls UNILAG's official website to extract current staff names
-2. **Fuzzy Name Matching**: Uses Levenshtein distance (85% threshold) to match author names
-3. **Affiliation Cross-Check**: Validates UNILAG affiliation text or @unilag.edu.ng emails
-4. **Manual Override**: Papers are ONLY accepted if at least ONE author is a confirmed staff member
+### Search Endpoints
 
-This prevents papers that just mention "Lagos" or "University of Lagos" from being captured.
+```bash
+# Advanced search with Boolean operators
+GET /api/search/advanced?q="machine learning" AND author:smith&sort=date&limit=50
+
+# Simple search
+GET /api/analytics/search?q=covid&faculty=science&year_from=2020&oa_only=true
+```
 
 ## 📁 Project Structure
 
 ```
 uraas/
-├── analytics/          # Analytics engine
-│   └── engine.py      # Top authors, collaboration networks
-├── dashboard/         # Flask web dashboard
-│   ├── app.py        # Main dashboard app
-│   └── templates/    # HTML templates
-├── pipelines/         # Scrapy pipelines
-│   ├── affiliation_filter.py  # Staff validation
-│   ├── unpaywall.py          # OA status enrichment
-│   ├── gap_analysis.py       # Deduplication
-│   └── database.py           # Storage & classification
-├── spiders/           # Web crawlers
+├── analytics/
+│   └── engine.py              # TK Vitality, Linguistic Diversity, Patent Velocity
+├── dashboard/
+│   ├── app.py                 # Flask app with comparator endpoints
+│   ├── templates/
+│   │   └── index.html         # Main dashboard (with comparator tab)
+│   └── static/
+│       └── css/
+│           └── professional.css  # Design system
+├── services/
+│   ├── comparator_engine.py   # Multi-institution comparison
+│   ├── citation_tracker.py    # Citation tracking & h-index
+│   └── advanced_search.py     # Boolean search engine
+├── spiders/
 │   └── sources/
-│       ├── faculty_directory_spider.py
 │       ├── arxiv_spider.py
 │       ├── scholar_spider.py
 │       ├── openalex_spider.py
-│       └── crossref_spider.py
-├── utils/             # Utilities
-│   ├── unilag_classifier.py  # Faculty/dept classification
-│   ├── staff_validator.py    # Staff name validation
-│   ├── pdf_downloader.py     # PDF download & storage
-│   └── normalizer.py         # Text normalization
-├── config.py          # Configuration
-└── database.py        # SQLAlchemy models
+│       ├── crossref_spider.py
+│       ├── orcid_spider.py
+│       └── faculty_directory_spider.py
+├── pipelines/
+│   ├── affiliation_filter.py  # Staff validation
+│   ├── unpaywall.py           # OA status enrichment
+│   ├── gap_analysis.py        # Deduplication
+│   └── database.py            # Storage with ROR support
+├── utils/
+│   ├── unilag_classifier.py   # Faculty/dept classification
+│   ├── staff_validator.py     # Staff name validation
+│   ├── pdf_downloader.py      # PDF download & storage
+│   ├── docid_generator.py     # Africa PID Alliance DocID
+│   └── normalizer.py          # Text normalization
+├── config.py                   # Configuration
+└── database.py                 # SQLAlchemy models (with ROR)
 
 data/
-└── unilag_staff.json  # Cached staff names
+├── unilag_staff.json           # 946 staff names
+└── staff_department_map.json  # Department mappings
 
 storage/
-└── pdfs/              # Downloaded PDFs
+└── pdfs/                       # 127 downloaded PDFs
 ```
 
-## 🎛️ Dashboard Features
+## 🗄️ Database Schema
 
-- **Crawler Control**: Start/stop crawler with live terminal feed
-- **Top Authors**: Most productive UNILAG researchers
-- **Archive Directory**: Hierarchical view (Faculty → Department → Papers)
-- **Collaboration Network**: Inter-departmental research partnerships
-- **Real-Time Updates**: WebSocket-based live crawler progress
+### Multi-Institution Support
 
-## 🔧 Advanced Configuration
+All papers are tagged with ROR (Research Organization Registry) identifiers:
 
-### Using PostgreSQL (Recommended for Production)
+```sql
+CREATE TABLE items (
+    id INTEGER PRIMARY KEY,
+    title VARCHAR(512),
+    abstract TEXT,
+    doi VARCHAR(255),
+    
+    -- Multi-institution support
+    ror VARCHAR(128),           -- Institution ROR ID
+    institution VARCHAR(255),   -- Institution name
+    
+    -- APA-specific fields
+    content_type VARCHAR(50),   -- For TK Vitality
+    tk_label VARCHAR(100),      -- Traditional Knowledge label
+    patent_id VARCHAR(128),     -- For Patent Velocity
+    patent_date DATETIME,
+    language_code VARCHAR(10),  -- For Linguistic Diversity
+    is_african_language BOOLEAN,
+    docid VARCHAR(128),         -- Africa PID Alliance DocID
+    
+    -- Standard fields
+    publication_date DATETIME,
+    created_at DATETIME,
+    ...
+);
 
-```bash
-# Start PostgreSQL with Docker
-docker-compose up -d postgres
-
-# Update .env
-DATABASE_URL=postgresql://uraas_user:uraas_pass@localhost:5432/uraas_db
-
-# Initialize
-python init_db.py
+CREATE INDEX ix_items_ror ON items(ror);
 ```
 
-### Crawler Settings
+### Current Data
 
-**Use the right crawler for your needs:**
+- **988 papers** from University of Lagos
+- All papers tagged with UNILAG ROR: `https://ror.org/03qcnxw14`
+- **127 PDFs** stored locally
+- **12 faculties**, **80+ departments**
+- **946 validated staff members**
 
-- `crawl_aggressive.py` - Searches up to 3000 pages until target reached (RECOMMENDED)
-- `crawl_10_validated.py` - Old crawler that stops after ~250-350 candidates
-- `run_aggressive_crawler.py` - Simple launcher for the aggressive crawler
+## 🎓 Adding More Institutions
 
-Examples:
-```bash
-# Get 10 papers (will search thousands of pages if needed)
-python crawl_aggressive.py --target 10
-
-# Get 50 papers  
-python crawl_aggressive.py --target 50
-
-# Using the launcher
-python run_aggressive_crawler.py --target 20
-```
+### Method 1: Manual Data Entry
 
 ```python
-'DOWNLOAD_DELAY': 2.0,           # Delay between requests (seconds)
-'CONCURRENT_REQUESTS': 8,        # Parallel requests
-'RETRY_TIMES': 3,                # Retry failed requests
+from uraas.database import SessionLocal, Item
+
+session = SessionLocal()
+
+paper = Item(
+    title="Sample Paper",
+    ror="https://ror.org/01js2sh04",  # University of Ibadan
+    institution="University of Ibadan",
+    # ... other fields
+)
+session.add(paper)
+session.commit()
 ```
 
-### PDF Storage
+### Method 2: Crawler Extension
 
-PDFs are stored in `STORAGE_PATH` with naming: `{item_id}_{hash}.pdf`
+Modify existing crawlers to accept ROR parameter and tag papers accordingly.
 
-Access via dashboard: `/api/papers/{item_id}/download`
+### Method 3: Bulk Import
 
-## 📈 Analytics API
+Create CSV with ROR column and import using migration script.
 
-### Get Top Authors
+## 🚀 Deployment
+
+### Development
+
 ```bash
-GET /api/stats
+python start_dashboard.py
 ```
 
-Returns:
-```json
-{
-  "top_authors": [
-    {"author": "Prof. A. Smith", "paper_count": 45}
-  ],
-  "network_edges": [
-    {"source": "Computer Science", "target": "Mathematics", "weight": 12}
-  ]
-}
-```
+### Production (Render.com)
 
-### Get Papers Tree
 ```bash
-GET /api/papers/tree
+# Uses gunicorn with production config
+gunicorn -c gunicorn_config.py uraas.dashboard.app:app
 ```
 
-Returns hierarchical structure: Faculty → Department → Papers
+Configuration in `gunicorn_config.py`:
+- 4 workers
+- 120s timeout
+- Access logging
+- Error logging
 
-## 🐛 Troubleshooting
+### Docker
 
-### No staff names found
-- Check UNILAG website structure hasn't changed
-- Run faculty spider manually: `scrapy crawl unilag_faculty_directory`
-
-### PDF downloads failing
-- Check firewall/proxy settings
-- Verify `STORAGE_PATH` has write permissions
-- Some publishers block automated downloads
-
-### High duplicate rate
-- Adjust `FUZZY_THRESHOLD` in `gap_analysis.py`
-- Check if staff cache is up to date
-
-### Crawler stops after 100 items
-- This limit has been removed in the latest version
-- If using old code, remove `CLOSESPIDER_ITEMCOUNT` from settings
+```bash
+docker-compose up -d
+```
 
 ## 🔐 Security Notes
 
-- Dashboard has NO authentication by default (add before production)
+- Dashboard has NO authentication by default (add OAuth before production)
 - PDFs are stored locally (ensure adequate disk space)
+- Rate limiting enabled (2s delay between requests)
 - Respect publisher copyright (Unpaywall integration helps)
-- Rate limiting is enabled (2s delay between requests)
+
+## 📈 Roadmap
+
+### High Priority
+- [ ] Collaboration Mesh D3.js visualization (geographic map)
+- [ ] PDF report generation (ReportLab/WeasyPrint)
+- [ ] OAuth authentication (ORCID integration)
+- [ ] Multi-language interface (French, Portuguese, Arabic, Swahili)
+
+### Medium Priority
+- [ ] Real-time data pipeline (async ingestion)
+- [ ] Elasticsearch integration for hot storage
+- [ ] Advanced visualizations (Tremor charts)
+- [ ] Mobile optimization
+
+### Low Priority
+- [ ] API documentation (Swagger/OpenAPI)
+- [ ] Performance optimization (Redis caching)
+- [ ] Lazy loading for large datasets
+
+## 🎯 UNESCO Presentation Readiness
+
+### Key Strengths
+
+1. **Novel Metrics**: TK Vitality, Linguistic Diversity, Patent Velocity - metrics that don't exist in Western platforms
+2. **Multi-Institution Comparison**: Built from ground up for comparative analysis
+3. **African Focus**: Indigenous knowledge, African languages, cultural preservation
+4. **Strategic Intelligence**: Decision-making tool for VCs and research leaders
+5. **Data Sovereignty**: Read-only DocID integration, African-owned infrastructure
+
+### Demo Flow
+
+1. Show UNILAG dashboard with 988 papers
+2. Navigate to Comparator tab (press 5)
+3. Add 2-3 institutions
+4. Run comparison showing metrics
+5. Generate senate report
+6. Highlight TK Vitality Score
+7. Show Linguistic Diversity Index
+8. Demonstrate Patent Velocity tracking
+
+### Key Messages
+
+- "Observer Engine" architecture - non-intrusive intelligence layer
+- Empowers African research leadership with data-driven decisions
+- Answers questions VCs actually ask
+- Built for Africa, by Africa
+- Complements DocID infrastructure without modifying it
 
 ## 📝 License
 
@@ -324,4 +512,6 @@ For issues or questions, contact: library@unilag.edu.ng
 
 ---
 
-**Built with ❤️ for the University of Lagos**
+**Built with ❤️ for the Africa PID Alliance and UNESCO**
+
+**Status**: Core platform implemented and functional. Comparator integrated. Ready for internal testing and stakeholder review.

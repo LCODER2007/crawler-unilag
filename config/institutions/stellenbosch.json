@@ -1,0 +1,34 @@
+{
+  "ror": "https://ror.org/05bk57929",
+  "name": "Stellenbosch University",
+  "short_name": "Stellenbosch",
+  "country": "South Africa",
+  "staff_file": "data/stellenbosch_staff.json",
+  "affiliation_patterns": [
+    "Stellenbosch University",
+    "University of Stellenbosch",
+    "Universiteit Stellenbosch",
+    "@sun.ac.za",
+    "SU Stellenbosch",
+    "Stellenbosch Univ.",
+    "Stellenbosch, South Africa"
+  ],
+  "faculties": [
+    "Faculty of AgriSciences",
+    "Faculty of Arts and Social Sciences",
+    "Faculty of Economic and Management Sciences",
+    "Faculty of Education",
+    "Faculty of Engineering",
+    "Faculty of Law",
+    "Faculty of Medicine and Health Sciences",
+    "Faculty of Military Science",
+    "Faculty of Science",
+    "Faculty of Theology"
+  ],
+  "crawler_settings": {
+    "rate_limit": 2.0,
+    "concurrent_requests": 8,
+    "retry_times": 3,
+    "download_delay": 2.0
+  }
+}

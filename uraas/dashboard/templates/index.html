@@ -3,138 +3,96 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>URAAS — University of Lagos Research Repository</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<meta name="description" content="URAAS — University of Lagos Research Archival & Analytics System. Discover, track, and analyze UNILAG research outputs across all faculties using AI-powered classification and Africa PID Alliance DocID™.">
+<title>URAAS — African Research Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-:root {
-  --bg: #0a0f1e; --surface: rgba(255,255,255,0.05); --surface-hover: rgba(255,255,255,0.08);
-  --border: rgba(255,255,255,0.1); --text: #e2e8f0; --text-muted: #64748b;
-  --text-dim: #94a3b8; --accent: #6366f1; --accent-hover: #4f46e5;
-  --scrollbar: #334155; --input-bg: #1e293b; --input-border: #334155;
-  --card-bg: rgba(255,255,255,0.04); --modal-bg: #1e293b;
-  --terminal-bg: #020617; --terminal-text: #4ade80;
-  --badge-idle-bg: #1e293b; --badge-idle-text: #64748b;
-  --tree-border: rgba(99,102,241,0.25);
-  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -1px rgba(0,0,0,0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -2px rgba(0,0,0,0.4);
-}
-[data-theme="light"] {
-  --bg: #f8fafc; --surface: rgba(255,255,255,0.95); --surface-hover: rgba(255,255,255,1);
-  --border: rgba(0,0,0,0.06); --text: #0f172a; --text-muted: #94a3b8;
-  --text-dim: #64748b; --accent: #4f46e5; --accent-hover: #4338ca;
-  --scrollbar: #cbd5e1; --input-bg: #ffffff; --input-border: #e2e8f0;
-  --card-bg: rgba(255,255,255,0.95); --modal-bg: #ffffff;
-  --terminal-bg: #1e293b; --terminal-text: #4ade80;
-  --badge-idle-bg: #e2e8f0; --badge-idle-text: #64748b;
-  --tree-border: rgba(99,102,241,0.3);
-  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-}
-* { box-sizing: border-box; }
-body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.2s; }
-.surface { background: var(--surface); border: 1px solid var(--border); backdrop-filter: blur(16px); box-shadow: var(--shadow-sm); }
-.surface-hover:hover { background: var(--surface-hover); box-shadow: var(--shadow-md); }
-.tree-node { margin-left: 14px; border-left: 2px solid var(--tree-border); padding-left: 12px; }
-.tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px; padding: 8px 18px; font-size: 13px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; gap: 7px; }
-.tab-btn:hover { background: var(--surface-hover); color: var(--text); transform: translateY(-1px); }
-.tab-btn.active { background: linear-gradient(135deg, var(--accent), #818cf8); color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
-.progress-bar { width:100%; height:3px; background: var(--input-bg); border-radius:4px; overflow:hidden; display:none; }
-.progress-bar.active { display:block; }
-.progress-bar-inner { width:40%; height:100%; background: linear-gradient(90deg,var(--accent),#818cf8); border-radius:4px; animation: slide 1.5s infinite ease-in-out; }
-@keyframes slide { 0%{margin-left:-40%} 100%{margin-left:100%} }
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:50; backdrop-filter:blur(8px); }
-.modal-overlay.open { display:flex; align-items:center; justify-content:center; animation: fadeIn 0.2s; }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-.stat-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-::-webkit-scrollbar { width:6px; height:6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius:6px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-input, select, textarea { background: var(--input-bg); color: var(--text); border: 1px solid var(--input-border); border-radius: 10px; padding: 8px 14px; font-size: 13px; width: 100%; transition: all 0.2s; }
-input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-.chip { display:inline-flex; align-items:center; gap:5px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:24px; padding:5px 14px; font-size:12px; cursor:pointer; transition:all 0.2s; color: var(--text-dim); font-weight: 500; }
-.chip:hover, .chip.active { background:var(--accent); border-color:var(--accent); color:#fff; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
-.row-hover { transition: all 0.15s; border-radius: 10px; }
-.row-hover:hover { background: var(--surface-hover); transform: translateX(2px); }
-.badge-oa { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); font-weight: 600; }
-.badge-restricted { background: rgba(100,116,139,0.15); color: var(--text-dim); border: 1px solid var(--input-border); font-weight: 500; }
-.btn-primary { background: linear-gradient(135deg, var(--accent), #818cf8); color: #fff; border: none; border-radius: 10px; padding: 9px 22px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
-.btn-danger { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; border: none; border-radius: 10px; padding: 9px 22px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 2px 8px rgba(220,38,38,0.3); }
-.btn-danger:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,38,38,0.4); }
-.btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--input-border); border-radius: 10px; padding: 8px 16px; font-size: 12px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
-.btn-ghost:hover { color: var(--text); border-color: var(--accent); background: var(--surface-hover); }
-.section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
-</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Fullscreen Chart Overlay -->
+<div id="fs-overlay" class="fs-overlay">
+  <div class="flex justify-between items-center mb-6">
+    <h2 id="fs-title" class="text-3xl font-bold  gradient-text"></h2>
+    <button onclick="closeFullscreen()" class="btn-ghost text-sm">✕Close</button>
+  </div>
+  <div class="flex-1" style="position:relative"><canvas id="fs-canvas"></canvas></div>
+</div>
+
 <!-- Paper Modal -->
 <div id="paper-modal" class="modal-overlay" onclick="if(event.target===this)closePaperModal()">
-  <div class="surface rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-7 mx-4" style="background:var(--modal-bg)">
-    <div class="flex justify-between items-start mb-5">
-      <h2 id="modal-title" class="text-lg font-bold pr-4 leading-snug" style="color:var(--text)"></h2>
-      <button onclick="closePaperModal()" class="btn-ghost px-3 py-1 text-lg leading-none">&times;</button>
+  <div style="background:var(--modal-bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:760px;max-height:90vh;overflow-y:auto;margin:16px">
+    <div class="sticky top-0 flex justify-between items-start p-6 pb-4 border-b" style="background:var(--modal-bg);border-color:var(--border);z-index:10;border-radius:20px 20px 0 0">
+      <h2 id="modal-title" class="text-base font-bold pr-4 leading-snug " style="color:var(--text)"></h2>
+      <button onclick="closePaperModal()" class="btn-ghost px-3 py-1 flex-shrink-0" style="font-size:18px;line-height:1">×</button>
     </div>
-    <div id="modal-body"></div>
+    <div id="modal-body" class="p-6"></div>
   </div>
 </div>
 
-<div class="max-w-screen-2xl mx-auto px-6 py-5">
+<!-- UNILAG Color Strip -->
+<div class="unilag-strip"></div>
 
-  <!-- Top bar -->
-  <header class="flex items-center justify-between mb-7">
+<!-- Main Container -->
+<div class="max-w-screen-2xl mx-auto px-5 py-5">
+
+  <!--  HEADER  -->
+  <header class="header-glass px-6 py-4 mb-6 flex items-center justify-between flex-wrap gap-4">
     <div class="flex items-center gap-4">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+           style="background:var(--accent)">
+        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </div>
       <div>
-        <div class="flex items-center gap-2">
-          <svg class="w-6 h-6" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          <span class="text-xl font-bold" style="color:var(--text)">URAAS</span>
-        </div>
-        <p class="text-xs mt-0.5" style="color:var(--text-muted)">University of Lagos — Research Archival &amp; Analytics System</p>
+        <h1 class="text-3xl font-extrabold tracking-tight gradient-text leading-none mb-1">URAAS</h1>
+        <p class="text-sm font-semibold tracking-wide uppercase" style="color:var(--text); opacity:0.9">African Research Archival &amp; Analytics System</p>
+        <p class="text-xs mt-1" style="color:var(--text-muted);opacity:.7">Africa PID Alliance DocID™ · TCC Africa · UNESCO-Aligned · 10 Institutions</p>
       </div>
     </div>
-    <div class="flex items-center gap-3">
-      <span id="crawler-badge" class="text-xs px-3 py-1 rounded-full font-semibold border" style="background:var(--badge-idle-bg);color:var(--badge-idle-text);border-color:var(--input-border)">Idle</span>
-      <!-- Theme toggle -->
-      <button onclick="toggleTheme()" id="theme-btn" class="btn-ghost flex items-center gap-2" title="Toggle theme">
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-2">
+        <div class="surface rounded-xl px-4 py-2 text-center min-w-[70px]">
+          <p class="text-2xl font-bold " style="color:var(--accent);font-size:1.5rem;font-weight:700" id="stat-total">—</p>
+          <p class="text-xs" style="color:var(--text-muted)">Papers</p>
+        </div>
+        <div class="surface rounded-xl px-4 py-2 text-center min-w-[70px]">
+          <p class="text-2xl font-bold " style="color:var(--text);font-size:1.5rem;font-weight:700" id="stat-authors">—</p>
+          <p class="text-xs" style="color:var(--text-muted)">Authors</p>
+        </div>
+        <div class="surface rounded-xl px-4 py-2 text-center min-w-[70px]">
+          <p class="text-2xl font-bold " style="color:var(--success);font-size:1.5rem;font-weight:700" id="stat-oa">—</p>
+          <p class="text-xs" style="color:var(--text-muted)">Open Access</p>
+        </div>
+      </div>
+      <span id="crawler-badge" class="text-xs px-3 py-1 rounded-full font-semibold border" style="background:var(--badge-idle-bg);color:var(--badge-idle-text);border-color:var(--input-border)">●Idle</span>
+      <button onclick="toggleTheme()" class="btn-ghost" title="Toggle theme (T)">
         <svg id="icon-moon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         <svg id="icon-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-        <span class="text-xs" id="theme-label">Light</span>
       </button>
     </div>
   </header>
 
-  <!-- Stat cards -->
-  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-    <div class="stat-card surface rounded-xl p-4">
-      <p class="section-label">Total Papers</p>
-      <p id="stat-total" class="text-3xl font-bold" style="color:var(--accent)">—</p>
-    </div>
-    <div class="stat-card surface rounded-xl p-4">
-      <p class="section-label">Authors</p>
-      <p id="stat-authors" class="text-3xl font-bold" style="color:#8b5cf6">—</p>
-    </div>
-    <div class="stat-card surface rounded-xl p-4">
-      <p class="section-label">Faculties</p>
-      <p id="stat-faculties" class="text-3xl font-bold" style="color:#0ea5e9">—</p>
-    </div>
-    <div class="stat-card surface rounded-xl p-4">
-      <p class="section-label">Open Access</p>
-      <p id="stat-oa" class="text-3xl font-bold" style="color:#10b981">—</p>
-    </div>
-    <div class="stat-card surface rounded-xl p-4">
-      <p class="section-label">PDFs Stored</p>
-      <p id="stat-pdfs" class="text-3xl font-bold" style="color:#f59e0b">—</p>
-    </div>
+  <!--  IMPACT CARDS  -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div class="stat-card surface rounded-xl p-4"><p class="section-label">Papers</p><p class="text-3xl font-bold " style="color:var(--accent);font-size:1.75rem;font-weight:700" id="ic-total">—</p></div>
+    <div class="stat-card surface rounded-xl p-4"><p class="section-label">Authors</p><p class="text-3xl font-bold " style="color:var(--text);font-size:1.75rem;font-weight:700" id="ic-authors">—</p></div>
+    <div class="stat-card surface rounded-xl p-4"><p class="section-label">Faculties</p><p class="text-3xl font-bold " style="color:var(--text);font-size:1.75rem;font-weight:700" id="ic-faculties">—</p></div>
+    <div class="stat-card surface rounded-xl p-4"><p class="section-label">Open Access</p><p class="text-3xl font-bold " style="color:var(--success);font-size:1.75rem;font-weight:700" id="ic-oa">—</p></div>
+    <div class="stat-card surface rounded-xl p-4"><p class="section-label">OA Rate</p><p class="text-3xl font-bold " style="color:var(--warning);font-size:1.75rem;font-weight:700" id="ic-oa-rate">—</p></div>
+    <div class="stat-card surface rounded-xl p-4"><p class="section-label">PDFs Stored</p><p class="text-3xl font-bold " style="color:var(--text);font-size:1.75rem;font-weight:700" id="ic-pdfs">—</p></div>
   </div>
 
-  <!-- Tabs -->
-  <div class="flex gap-1 mb-5 border-b pb-3" style="border-color:var(--border)">
+  <!--  MAIN TABS  -->
+  <div class="flex gap-1 mb-5 overflow-x-auto pb-1" style="border-bottom:1px solid var(--border)">
     <button class="tab-btn active" id="tab-btn-crawler" onclick="switchTab('crawler',this)">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
       Crawler
@@ -143,21 +101,61 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
       Archive
     </button>
+    <button class="tab-btn" id="tab-btn-search" onclick="switchTab('search',this)">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+      Search
+    </button>
     <button class="tab-btn" id="tab-btn-analytics" onclick="switchTab('analytics',this)">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       Analytics
     </button>
+    <button class="tab-btn" id="tab-btn-comparator" onclick="switchTab('comparator',this)">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Comparator
+    </button>
+    <span class="ml-2 text-xs self-center" style="color:var(--text-muted)">Press 1–5 or / to navigate</span>
   </div>
 
-  <!-- TAB: CRAWLER -->
+  <!--  -->
+  <!-- TAB: CRAWLER                                           -->
+  <!--  -->
   <div id="tab-crawler" class="tab-content">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <div class="surface rounded-2xl p-6">
         <p class="section-label">Mining Control</p>
         <div class="mb-4">
-          <label class="block text-xs mb-1.5" style="color:var(--text-dim)">Target Papers (1–250)</label>
-          <input type="number" id="target-count" min="1" max="250" value="20" style="width:100%"/>
-          <p class="text-xs mt-1.5" style="color:var(--text-muted)">Validated against 946 UNILAG staff names · 75% fuzzy match threshold</p>
+          <label class="block text-xs mb-1.5 font-medium" style="color:var(--text-dim)">Select Institution</label>
+          <select id="crawler-institution" class="w-full mb-3" style="font-size:13px">
+            <optgroup label="🇳🇬 Nigeria">
+              <option value="unilag">University of Lagos (UNILAG)</option>
+              <option value="covenant">Covenant University</option>
+              <option value="ui">University of Ibadan (UI)</option>
+            </optgroup>
+            <optgroup label="🌍 Africa">
+              <option value="uct">University of Cape Town (UCT)</option>
+              <option value="stellenbosch">Stellenbosch University</option>
+              <option value="nairobi">University of Nairobi</option>
+              <option value="makerere">Makerere University</option>
+              <option value="ghana">University of Ghana</option>
+              <option value="addisababa">Addis Ababa University</option>
+              <option value="knust">KNUST Ghana</option>
+            </optgroup>
+          </select>
+          <label class="block text-xs mb-1.5 font-medium" style="color:var(--text-dim)">TargetPapers (1–250)</label>
+          <input type="number" id="target-count" min="1" max="250" value="20"/>
+          
+          <div class="mt-4 space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="boost-special" checked class="w-4 h-4" style="accent-color:var(--accent)"/>
+              <span class="text-xs font-semibold" style="color:var(--text)">Target Special Collections</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="sc-only" class="w-4 h-4" style="accent-color:var(--accent)"/>
+              <span class="text-xs font-semibold" style="color:var(--text)">SC Only (Skip General Crawl)</span>
+            </label>
+          </div>
+          
+          <p class="text-xs mt-3" id="staff-validation-text" style="color:var(--text-muted)">Validated against institutional registry</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button id="btn-start" onclick="startCrawler()" class="btn-primary">
@@ -172,82 +170,262 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
         <div class="mt-4 progress-bar" id="crawler-progress"><div class="progress-bar-inner"></div></div>
       </div>
       <div class="surface rounded-2xl p-5">
-        <p class="section-label">Live Feed</p>
-        <div id="terminal-log" class="rounded-lg p-3 h-44 overflow-y-auto text-xs font-mono space-y-0.5" style="background:var(--terminal-bg);color:var(--terminal-text)">
-          <div style="color:#475569">// Crawler idle. Press Start Mining to begin...</div>
+        <div class="flex items-center justify-between mb-3">
+          <p class="section-label mb-0">Live Feed</p>
+          <button onclick="clearTerm('terminal-log')" class="btn-ghost text-xs">Clear</button>
+        </div>
+        <div id="terminal-log" class="rounded-xl p-3 overflow-y-auto text-xs mono space-y-0.5" style="background:var(--terminal-bg);color:var(--terminal-text);height:11rem">
+          <div style="color:#334155">// Crawler idle. Press Start Mining to begin...</div>
         </div>
       </div>
     </div>
+
+    <!-- DocID Section -->
     <div class="surface rounded-2xl p-6 mt-5">
-      <p class="section-label">Recently Harvested</p>
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div>
+          <p class="section-label mb-1"> DocID™ Repository Crawler</p>
+          <p class="text-xs" style="color:var(--text-muted)">Crawl UNILAG's institutional repository · Generate Africa PID Alliance DocID™ identifiers</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="docid-badge" class="text-xs px-3 py-1 rounded-full font-semibold border" style="background:var(--badge-idle-bg);color:var(--badge-idle-text);border-color:var(--input-border)">●Idle</span>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="docid-toggle" onchange="toggleDocIDCrawler()" class="w-4 h-4" style="accent-color:var(--accent)"/>
+            <span class="text-xs font-semibold" style="color:var(--text)">Enable DocID™</span>
+          </label>
+        </div>
+      </div>
+      <div id="docid-crawler-panel" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="block text-xs mb-1.5" style="color:var(--text-dim)">TargetPapers (1–200)</label>
+            <input type="number" id="docid-target-count" min="1" max="200" value="50"/>
+            <p class="text-xs mt-1.5" style="color:var(--text-muted)">Source: ir.unilag.edu.ng</p>
+          </div>
+          <div class="rounded-xl p-4 flex items-center justify-around" style="background:var(--input-bg)">
+            <div class="text-center">
+              <p class="text-xs" style="color:var(--text-muted)">DocIDPapers</p>
+              <p id="docid-count" class="text-2xl font-bold " style="color:var(--accent)">—</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs" style="color:var(--text-muted)">Coverage</p>
+              <p id="docid-coverage" class="text-2xl font-bold " style="color:#10b981">—</p>
+            </div>
+          </div>
+          <div class="rounded-xl p-4" style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2)">
+            <p class="text-xs font-bold mb-1" style="color:var(--accent)">Africa PID Alliance DocID™</p>
+            <p class="text-xs" style="color:var(--text-muted)">Format: <span class="mono">20.500.14351/[hash]</span></p>
+            <p class="text-xs mt-1" style="color:var(--text-muted)">Ensures long-term discoverability for African research outputs and indigenous knowledge.</p>
+          </div>
+        </div>
+        <div class="flex gap-2 flex-wrap mb-4">
+          <button id="btn-docid-start" onclick="startDocIDCrawler()" class="btn-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Start DocID™ Crawler
+          </button>
+          <button id="btn-docid-stop" onclick="stopDocIDCrawler()" class="btn-danger hidden">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+            Stop
+          </button>
+          <button onclick="refreshDocIDStats()" class="btn-ghost text-xs">Refresh Stats</button>
+        </div>
+        <div class="progress-bar" id="docid-crawler-progress"><div class="progress-bar-inner"></div></div>
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="section-label mb-0">DocID™Live Feed</p>
+            <button onclick="clearTerm('docid-terminal-log')" class="btn-ghost text-xs">Clear</button>
+          </div>
+          <div id="docid-terminal-log" class="rounded-xl p-3 overflow-y-auto text-xs mono space-y-0.5" style="background:var(--terminal-bg);color:var(--terminal-text);height:10rem">
+            <div style="color:#334155">// DocID™ crawler idle...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--Recently Harvested -->
+    <div class="surface rounded-2xl p-6 mt-5">
+      <div class="flex items-center justify-between mb-4">
+        <p class="section-label mb-0">Recently Harvested</p>
+        <span id="recent-count" class="text-xs" style="color:var(--text-muted)"></span>
+      </div>
       <div id="recent-papers" class="space-y-1.5"></div>
     </div>
   </div>
 
-  <!-- TAB: ARCHIVE -->
+  <!--  -->
+  <!-- TAB: ARCHIVE                                           -->
+  <!--  -->
   <div id="tab-archive" class="tab-content hidden">
     <div class="surface rounded-2xl p-6">
       <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
         <div>
-          <p class="section-label">Archive Directory</p>
-          <p class="text-xs" style="color:var(--text-muted)">Faculties and departments with indexed papers</p>
+          <p class="section-label mb-0">Archive Directory</p>
+          <p class="text-xs mt-1" style="color:var(--text-muted)">All indexed UNILAG research papers, organized by faculty and department</p>
         </div>
-        <span id="total-papers-badge" class="text-xs font-semibold px-3 py-1 rounded-full" style="background:rgba(99,102,241,0.15);color:var(--accent)">0 papers</span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="total-papers-badge" class="text-xs font-semibold px-3 py-1 rounded-full" style="background:rgba(99,102,241,.12);color:var(--accent)">0 papers</span>
+          <a href="/api/export/papers.csv" class="btn-ghost text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            CSV
+          </a>
+          <a href="/api/export/papers.bibtex" class="btn-ghost text-xs">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            BibTeX
+          </a>
+        </div>
       </div>
-      <div class="relative mb-4">
-        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-        <input type="text" id="archive-search" placeholder="Search by title or DOI..." oninput="filterArchive(this.value)" style="padding-left:36px"/>
-      </div>
+        <div class="flex items-center gap-2">
+          <select id="archive-institution-select" onchange="fetchArchive()" style="font-size:12px;padding:4px 28px 4px 10px;width:180px;height:28px">
+            <option value="">All Institutions</option>
+            <option value="unilag">University of Lagos</option>
+            <option value="ui">University of Ibadan</option>
+            <option value="knust">KNUST</option>
+            <option value="addis">Addis Ababa University</option>
+            <option value="stellenbosch">Stellenbosch University</option>
+            <option value="ghana">University of Ghana</option>
+            <option value="nairobi">University of Nairobi</option>
+            <option value="makerere">Makerere University</option>
+            <option value="uct">University of Cape Town</option>
+            <option value="covenant">Covenant University</option>
+          </select>
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+            <input type="text" id="archive-search" placeholder="Filter by title or DOI..." oninput="filterArchive(this.value)" style="padding-left:36px"/>
+          </div>
+        </div>
       <div id="tree-container" class="space-y-4 overflow-y-auto pr-1" style="max-height:65vh">
-        <p class="text-sm" style="color:var(--text-muted)">Loading archive...</p>
+        <div class="flex items-center gap-3 py-10 justify-center">
+          <div class="w-6 h-6 border-2 rounded-full animate-spin" style="border-color:var(--accent);border-top-color:transparent"></div>
+          <p class="text-sm" style="color:var(--text-muted)">Loading archive...</p>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- TAB: ANALYTICS -->
-  <div id="tab-analytics" class="tab-content hidden">
-
-    <!-- Sub-tabs -->
-    <div class="flex gap-1 mb-5 flex-wrap">
-      <button class="tab-btn active text-xs" id="atab-btn-overview" onclick="switchAnalyticsTab('overview',this)">Overview</button>
-      <button class="tab-btn text-xs" id="atab-btn-compare" onclick="switchAnalyticsTab('compare',this)">Compare</button>
-      <button class="tab-btn text-xs" id="atab-btn-network" onclick="switchAnalyticsTab('network',this)">Network</button>
-      <button class="tab-btn text-xs" id="atab-btn-trends" onclick="switchAnalyticsTab('trends',this)">Trends</button>
-      <button class="tab-btn text-xs" id="atab-btn-language" onclick="switchAnalyticsTab('language',this)">Language &amp; Culture</button>
-      <button class="tab-btn text-xs" id="atab-btn-lecturer" onclick="switchAnalyticsTab('lecturer',this)">Lecturer Profile</button>
+  <!--  -->
+  <!-- TAB: SEARCH (ADVANCED - Scopus-style)                 -->
+  <!--  -->
+  <div id="tab-search" class="tab-content hidden">
+    <!-- Advanced Search Help -->
+    <div class="surface rounded-xl p-4 mb-4" style="background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2)">
+      <p class="text-xs font-semibold mb-2" style="color:var(--accent)">🚀 Advanced Search (Scopus-style Boolean operators)</p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs" style="color:var(--text-dim)">
+        <div><code class="text-green-400">"phrase"</code> - Exact match</div>
+        <div><code class="text-green-400">author:smith</code> - By author</div>
+        <div><code class="text-green-400">year:2020</code> - By year</div>
+        <div><code class="text-green-400">faculty:science</code> - By faculty</div>
+        <div><code class="text-yellow-400">AND</code> - Both terms</div>
+        <div><code class="text-yellow-400">OR</code> - Either term</div>
+        <div><code class="text-yellow-400">NOT</code> - Exclude term</div>
+        <div><code class="text-purple-400">title:</code> <code class="text-purple-400">doi:</code> <code class="text-purple-400">keyword:</code></div>
+      </div>
     </div>
 
-    <!-- OVERVIEW sub-tab -->
-    <div id="atab-overview" class="atab-content">
-      <!-- Impact bar -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5" id="impact-cards"></div>
-      
-      <!-- Load Charts Button -->
-      <div class="text-center mb-4">
-        <button id="load-charts-btn" onclick="forceLoadAnalytics()" 
-                class="px-4 py-2 rounded-lg text-sm font-medium text-white"
-                style="background: #6366f1;">
-          Load Charts
-        </button>
+    <div class="surface rounded-2xl p-6 mb-4">
+      <p class="section-label">Advanced Research Search</p>
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-4">
+        <div class="lg:col-span-2 relative">
+          <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+          <input type="text" id="search-q" placeholder='Try: "machine learning" AND author:smith OR year:2020' style="padding-left:36px" onkeypress="if(event.key==='Enter')runSearch()"/>
+        </div>
+        <select id="search-sort" style="font-size:13px">
+          <option value="relevance">Sort: Relevance</option>
+          <option value="date">Sort: Date (newest)</option>
+          <option value="citations">Sort: Citations</option>
+          <option value="title">Sort: Title (A-Z)</option>
+        </select>
+        <div class="flex gap-2">
+          <input type="number" id="search-year-from" placeholder="From" min="1970" max="2030" style="font-size:13px"/>
+          <input type="number" id="search-year-to" placeholder="To" min="1970" max="2030" style="font-size:13px"/>
+        </div>
       </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <button onclick="runAdvancedSearch()" class="btn-primary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+          Search
+        </button>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="search-oa-only" class="w-4 h-4" style="accent-color:var(--accent)"/>
+          <span class="text-xs font-medium" style="color:var(--text)">Open Access Only</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="search-has-pdf" class="w-4 h-4" style="accent-color:var(--accent)"/>
+          <span class="text-xs font-medium" style="color:var(--text)">Has PDF</span>
+        </label>
+        <button onclick="clearSearch()" class="btn-ghost text-xs">Clear</button>
+        <span id="search-result-count" class="text-xs" style="color:var(--text-muted)"></span>
+      </div>
+    </div>
+    <div id="search-results" class="space-y-3"></div>
+  </div>
+
+  <!--  -->
+  <!-- TAB: ANALYTICS                                         -->
+  <!--  -->
+  <div id="tab-analytics" class="tab-content hidden">
+
+    <!-- Analytics Sub-tabs & Global Filter -->
+    <div class="flex items-center justify-between gap-4 mb-5 pb-1" style="border-bottom:1px solid var(--border)">
+      <div class="flex gap-1 overflow-x-auto flex-1">
+        <button class="tab-btn text-xs" id="atab-btn-overview" onclick="switchAtab('overview',this)">Overview</button>
+        <button class="tab-btn text-xs" id="atab-btn-sdg" onclick="switchAtab('sdg',this)">SDG Alignment</button>
+        <button class="tab-btn text-xs" id="atab-btn-trends" onclick="switchAtab('trends',this)">Trends</button>
+        <button class="tab-btn text-xs" id="atab-btn-network" onclick="switchAtab('network',this)">Network</button>
+        <button class="tab-btn text-xs" id="atab-btn-compare" onclick="switchAtab('compare',this)">Compare</button>
+        <button class="tab-btn text-xs" id="atab-btn-lecturer" onclick="switchAtab('lecturer',this)">Lecturer</button>
+        <button class="tab-btn text-xs" id="atab-btn-language" onclick="switchAtab('language',this)">Language</button>
+        <button class="tab-btn text-xs" id="atab-btn-special" onclick="switchAtab('special',this)">Special Collections</button>
+        <button class="tab-btn text-xs" id="atab-btn-staff" onclick="switchAtab('staff',this)">Staff Directory</button>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <label for="global-institution-select" class="text-xs" style="color:var(--text-muted)">Filter:</label>
+        <select id="global-institution-select" onchange="applyGlobalInstitutionFilter()" style="font-size:12px;padding:4px 28px 4px 10px;width:180px;height:28px">
+          <option value="">All Institutions</option>
+          <option value="unilag">University of Lagos</option>
+          <option value="ui">University of Ibadan</option>
+          <option value="knust">KNUST</option>
+          <option value="addis">Addis Ababa University</option>
+          <option value="stellenbosch">Stellenbosch University</option>
+          <option value="ghana">University of Ghana</option>
+          <option value="nairobi">University of Nairobi</option>
+          <option value="makerere">Makerere University</option>
+          <option value="uct">University of Cape Town</option>
+          <option value="covenant">Covenant University</option>
+        </select>
+      </div>
+    </div>
+
+    <!--  OVERVIEW  -->
+    <div id="atab-overview" class="atab-content">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5" id="impact-cards"></div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <div class="surface rounded-2xl p-5">
+        <div class="surface rounded-2xl p-5 chart-wrapper" style="position:relative">
           <div class="flex justify-between items-center mb-4">
             <p class="section-label mb-0">Publications by Year</p>
-            <select id="year-chart-mode" onchange="reloadYearChart()" style="width:auto">
-              <option value="total">Total</option>
-              <option value="stacked">By Faculty</option>
-            </select>
+            <div class="flex items-center gap-2">
+              <select id="year-chart-mode" onchange="reloadYearChart()" style="width:auto;font-size:11px;padding:4px 10px">
+                <option value="total">Total</option>
+                <option value="stacked">By Faculty</option>
+              </select>
+              <button class="chart-fullscreen-btn" onclick="openFS('year','Publications by Year')" title="Fullscreen">
+                <svg class="w-3 h-3" style="color:var(--text-dim)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              </button>
+            </div>
           </div>
           <canvas id="chart-year" height="200"></canvas>
         </div>
-        <div class="surface rounded-2xl p-5">
+        <div class="surface rounded-2xl p-5 chart-wrapper" style="position:relative">
           <div class="flex justify-between items-center mb-4">
             <p class="section-label mb-0">Papers by Faculty</p>
-            <select id="faculty-chart-type" onchange="reloadFacultyChart()" style="width:auto">
-              <option value="bar">Bar</option>
-              <option value="doughnut">Doughnut</option>
-            </select>
+            <div class="flex items-center gap-2">
+              <select id="faculty-chart-type" onchange="reloadFacultyChart()" style="width:auto;font-size:11px;padding:4px 10px">
+                <option value="bar">Bar</option>
+                <option value="doughnut">Doughnut</option>
+              </select>
+              <button class="chart-fullscreen-btn" onclick="openFS('faculty','Papers by Faculty')" title="Fullscreen">
+                <svg class="w-3 h-3" style="color:var(--text-dim)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              </button>
+            </div>
           </div>
           <canvas id="chart-faculty" height="200"></canvas>
         </div>
@@ -256,7 +434,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
         <div class="surface rounded-2xl p-5">
           <div class="flex justify-between items-center mb-4">
             <p class="section-label mb-0">Access Type</p>
-            <select id="oa-chart-type" onchange="reloadOAChart()" style="width:auto">
+            <select id="oa-chart-type" onchange="reloadOAChart()" style="width:auto;font-size:11px;padding:4px 10px">
               <option value="doughnut">Doughnut</option>
               <option value="bar">Bar</option>
             </select>
@@ -265,16 +443,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
         </div>
         <div class="surface rounded-2xl p-5 lg:col-span-2">
           <div class="flex justify-between items-center mb-4">
-            <p class="section-label mb-0">Top Authors</p>
-            <select id="authors-limit" onchange="reloadAuthorsChart()" style="width:auto">
-              <option value="10">Top 10</option><option value="15" selected>Top 15</option>
-              <option value="20">Top 20</option><option value="30">Top 30</option>
+            <p class="section-label mb-0"> TopAuthors</p>
+            <select id="authors-limit" onchange="reloadAuthorsChart()" style="width:auto;font-size:11px;padding:4px 10px">
+              <option value="10">Top 10</option>
+              <option value="15" selected>Top 15</option>
+              <option value="20">Top 20</option>
+              <option value="30">Top 30</option>
             </select>
           </div>
           <canvas id="chart-authors" height="200"></canvas>
         </div>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div class="surface rounded-2xl p-5">
           <p class="section-label">Open Access per Faculty</p>
           <canvas id="chart-faculty-oa" height="200"></canvas>
@@ -283,18 +463,86 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
           <p class="section-label">Harvest Growth</p>
           <canvas id="chart-growth" height="200"></canvas>
         </div>
+        <div class="surface rounded-2xl p-5">
+          <p class="section-label">Repository Timeline</p>
+          <canvas id="chart-timeline" height="200"></canvas>
+        </div>
       </div>
     </div>
 
-    <!-- COMPARE sub-tab -->
+    <!--  SDG ALIGNMENT  -->
+    <div id="atab-sdg" class="atab-content hidden">
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold  mb-1" style="color:var(--text)">UN Sustainable Development Goals Alignment</h2>
+          <p class="text-sm" style="color:var(--text-muted)">Research mapped to all 17 UN SDGs via AI (spaCy NLP). Click any goal to explore its papers.</p>
+        </div>
+        <a href="/api/analytics/sdg-alignment/export.csv" class="btn-ghost text-xs flex-shrink-0" id="sdg-csv-btn">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Download CSV
+        </a>
+      </div>
+      <div id="sdg-loading" class="flex items-center gap-3 py-10 justify-center">
+        <div class="w-6 h-6 border-2 rounded-full animate-spin" style="border-color:var(--accent);border-top-color:transparent"></div>
+        <p class="text-sm" style="color:var(--text-muted)">Analyzing SDG alignment...</p>
+      </div>
+      <div id="sdg-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-6 hidden"></div>
+      <div id="sdg-papers-panel" class="surface rounded-2xl p-6 hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 id="sdg-panel-title" class="text-base font-bold " style="color:var(--text)"></h3>
+          <button onclick="closeSdgPanel()" class="btn-ghost text-xs">✕Close</button>
+        </div>
+        <div id="sdg-papers-list" class="space-y-2 overflow-y-auto" style="max-height:400px"></div>
+      </div>
+    </div>
+
+
+    <!--  TRENDS  -->
+    <div id="atab-trends" class="atab-content hidden">
+      <div class="surface rounded-2xl p-5 mb-5">
+        <p class="section-label">Research TopicTrends Over Time</p>
+        <p class="text-xs mb-4" style="color:var(--text-muted)">12 tracked research domains — click any topic chip to see its year-by-year trajectory</p>
+        <div id="trends-chips" class="flex flex-wrap gap-2 mb-5"></div>
+        <canvas id="chart-trends" height="200"></canvas>
+      </div>
+      <div class="surface rounded-2xl p-5">
+        <p class="section-label">Topic Leaderboard</p>
+        <div id="trends-leaderboard" class="space-y-2.5"></div>
+      </div>
+    </div>
+
+    <!--  NETWORK  -->
+    <div id="atab-network" class="atab-content hidden">
+      <div class="surface rounded-2xl p-5">
+        <p class="section-label">Research CollaborationNetwork</p>
+        <p class="text-xs mb-3" style="color:var(--text-muted)">Search a UNILAG researcher to visualize their collaboration graph. Click nodes to explore collaborator networks.</p>
+        <div class="relative mb-3">
+          <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+          <input type="text" id="network-search-input" placeholder="Enter researcher name..." oninput="debNetSearch()" style="padding-left:36px"/>
+        </div>
+        <div id="network-suggestions" class="flex flex-wrap gap-2 mb-4"></div>
+        <div id="network-result" class="hidden">
+          <div class="flex justify-between items-center mb-3">
+            <p class="text-sm font-semibold" id="network-researcher-name" style="color:var(--text)"></p>
+            <button onclick="downloadNetData()" class="btn-ghost text-xs">Download CSV</button>
+          </div>
+          <div id="network-graph-container" style="height:420px;position:relative;border-radius:14px;overflow:hidden;background:var(--terminal-bg);border:1px solid var(--border)">
+            <svg id="network-svg"></svg>
+          </div>
+          <div id="network-table" class="mt-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <!--  COMPARE  -->
     <div id="atab-compare" class="atab-content hidden">
       <div class="surface rounded-2xl p-5 mb-5">
         <p class="section-label">Faculty Comparison</p>
         <div class="flex gap-3 flex-wrap mb-4">
-          <select id="cmp-faculty-a" style="width:auto"><option value="">Select Faculty A</option></select>
-          <select id="cmp-faculty-b" style="width:auto"><option value="">Select Faculty B</option></select>
+          <select id="cmp-faculty-a" style="width:auto"><option value="">Faculty A</option></select>
+          <select id="cmp-faculty-b" style="width:auto"><option value="">Faculty B</option></select>
           <select id="cmp-faculty-c" style="width:auto"><option value="">Faculty C (optional)</option></select>
-          <button class="btn-primary text-xs" onclick="runFacultyComparison()">Compare</button>
+          <button class="btn-primary" style="font-size:12px;padding:7px 16px" onclick="runFacComparison()">Compare</button>
         </div>
         <div id="faculty-comparison-result"></div>
       </div>
@@ -302,782 +550,220 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
         <p class="section-label">Department Breakdown</p>
         <div class="flex gap-3 mb-4">
           <select id="dept-cmp-faculty" style="width:auto"><option value="">Select Faculty</option></select>
-          <button class="btn-primary text-xs" onclick="runDeptComparison()">Show Departments</button>
+          <button class="btn-primary" style="font-size:12px;padding:7px 16px" onclick="runDeptComparison()">Show Departments</button>
         </div>
         <canvas id="chart-dept-compare" height="250"></canvas>
       </div>
     </div>
 
-    <!-- NETWORK sub-tab -->
-    <div id="atab-network" class="atab-content hidden">
-      <div class="surface rounded-2xl p-5">
-        <div class="mb-4">
-          <p class="section-label">Research Collaborations</p>
-          <p class="text-xs mb-3" style="color:var(--text-muted)">Search for a UNILAG researcher to view their top collaborators</p>
-          <div class="relative">
-            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input type="text" id="network-search-input" placeholder="Enter researcher name..." oninput="debounceNetworkSearch()" style="padding-left:36px"/>
-          </div>
-          <div id="network-suggestions" class="mt-2 space-y-1"></div>
-        </div>
-        <div id="network-result" class="hidden">
-          <div class="flex justify-between items-center mb-3">
-            <p class="text-sm font-semibold" id="network-researcher-name" style="color:var(--text)"></p>
-            <button onclick="downloadNetworkData()" class="btn-ghost text-xs">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              Download
-            </button>
-          </div>
-          <div id="network-table"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TRENDS sub-tab -->
-    <div id="atab-trends" class="atab-content hidden">
-      <div class="surface rounded-2xl p-5 mb-5">
-        <p class="section-label">Research Topic Trends Over Time</p>
-        <p class="text-xs mb-4" style="color:var(--text-muted)">Click a topic to see its year-by-year trajectory</p>
-        <div id="trends-chips" class="flex flex-wrap gap-2 mb-4"></div>
-        <canvas id="chart-trends" height="200"></canvas>
-      </div>
-    </div>
-
-    <!-- LANGUAGE & CULTURE sub-tab -->
-    <div id="atab-language" class="atab-content hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <div class="surface rounded-2xl p-5">
-          <p class="section-label">Top Language &amp; Culture Keywords</p>
-          <canvas id="chart-language-kw" height="260"></canvas>
-        </div>
-        <div class="surface rounded-2xl p-5">
-          <p class="section-label">Language Research Papers</p>
-          <p class="text-xs mb-3" style="color:var(--text-muted)">Papers on Nigerian languages, African literature, linguistics, oral traditions</p>
-          <div id="language-papers" class="space-y-1.5 overflow-y-auto" style="max-height:320px"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- LECTURER PROFILE sub-tab -->
+    <!--  LECTURER  -->
     <div id="atab-lecturer" class="atab-content hidden">
-      <div class="surface rounded-2xl p-5 mb-5">
+      <div class="surface rounded-2xl p-5">
         <p class="section-label">Lecturer / Researcher Profile</p>
-        <div class="flex gap-3 mb-4">
-          <div class="relative flex-1">
-            <input type="text" id="lecturer-search-input" placeholder="Type lecturer name..." oninput="debounceAuthorSearch()" style="padding-left:36px"/>
-            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-          </div>
+        <div class="relative mb-3">
+          <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+          <input type="text" id="lecturer-search-input" placeholder="Type lecturer name..." oninput="debAuthorSearch()" style="padding-left:36px"/>
         </div>
         <div id="author-suggestions" class="flex flex-wrap gap-2 mb-4"></div>
         <div id="lecturer-profile-result"></div>
       </div>
     </div>
 
+    <!--  LANGUAGE  -->
+    <div id="atab-language" class="atab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="surface rounded-2xl p-5">
+          <p class="section-label">Language &amp; CultureKeywords</p>
+          <canvas id="chart-language-kw" height="260"></canvas>
+        </div>
+        <div class="surface rounded-2xl p-5">
+          <p class="section-label">Language ResearchPapers</p>
+          <p class="text-xs mb-3" style="color:var(--text-muted)">Papers on Nigerian languages, African literature, linguistics &amp; oral traditions</p>
+          <div id="language-papers" class="space-y-1.5 overflow-y-auto" style="max-height:320px"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!--  SPECIAL COLLECTIONS  -->
+    <div id="atab-special" class="atab-content hidden">
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold mb-1" style="color:var(--text)">Special Collections: African Literature &amp; Indigenous Knowledge</h2>
+          <p class="text-sm" style="color:var(--text-muted)">AI-powered classification: Postcolonial Studies, Pan-African Studies, Ethnomusicology &amp; more.</p>
+        </div>
+        <a href="/api/analytics/special-collections/export.csv" class="btn-ghost text-xs flex-shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Download CSV
+        </a>
+      </div>
+      <div id="special-loading" class="flex items-center gap-3 py-10 justify-center">
+        <div class="w-6 h-6 border-2 rounded-full animate-spin" style="border-color:var(--accent);border-top-color:transparent"></div>
+        <p class="text-sm" style="color:var(--text-muted)">Analyzing special collections...</p>
+      </div>
+      <div id="special-content" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6" id="special-stats"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5" id="special-categories"></div>
+      </div>
+    </div>
+
+    <!--  STAFF DIRECTORY  -->
+    <div id="atab-staff" class="atab-content hidden">
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold mb-1" style="color:var(--text)">Staff Directory</h2>
+          <p class="text-sm" style="color:var(--text-muted)">Real staff members with departments and ORCID identifiers, harvested from OpenAlex and ORCID APIs.</p>
+        </div>
+        <select id="staff-inst-filter" onchange="loadStaffDirectory()" style="width:auto;font-size:12px;padding:5px 10px">
+          <option value="">All Institutions</option>
+          <option value="unilag">UNILAG</option><option value="covenant">Covenant</option>
+          <option value="ui">Univ. Ibadan</option><option value="uct">UCT</option>
+          <option value="stellenbosch">Stellenbosch</option><option value="nairobi">Nairobi</option>
+          <option value="makerere">Makerere</option><option value="ghana">Univ. Ghana</option>
+          <option value="addisababa">Addis Ababa</option><option value="knust">KNUST</option>
+        </select>
+      </div>
+      <div id="staff-loading" class="flex items-center gap-3 py-10 justify-center">
+        <div class="w-6 h-6 border-2 rounded-full animate-spin" style="border-color:var(--accent);border-top-color:transparent"></div>
+        <p class="text-sm" style="color:var(--text-muted)">Loading staff directory...</p>
+      </div>
+      <div id="staff-content" class="hidden">
+        <div id="staff-institutions-list" class="space-y-6"></div>
+      </div>
+    </div>
+
   </div><!-- end analytics tab -->
 
-</div><!-- end container -->
-
-<script>
-const socket = io();
-let archiveData = {};
-let charts = {};
-let yearDataCache = null, yearStackedCache = null, facultyDataCache = null;
-let networkData = null;
-
-// ── Theme ──────────────────────────────────────────────────
-function toggleTheme() {
-  const html = document.documentElement;
-  const isDark = html.getAttribute('data-theme') === 'dark';
-  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  document.getElementById('icon-moon').classList.toggle('hidden', !isDark);
-  document.getElementById('icon-sun').classList.toggle('hidden', isDark);
-  document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
-  // Update chart defaults
-  const textColor = isDark ? '#64748b' : '#475569';
-  Chart.defaults.color = textColor;
-  Object.values(charts).forEach(c => { c.options.plugins.legend && (c.options.plugins.legend.labels.color = textColor); c.update(); });
-}
-
-// ── Download Functions ──────────────────────────────────────
-function downloadNetworkData() {
-  if (!networkData) return;
-  const csv = 'Author 1,Author 2,Collaborations\n' + networkData.map(r => `"${r.author1}","${r.author2}",${r.count}`).join('\n');
-  downloadFile(csv, 'research-collaborations.csv', 'text/csv');
-}
-
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-// ── Tabs ───────────────────────────────────────────────────
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.remove('hidden');
-  if (btn) btn.classList.add('active');
-  else document.getElementById('tab-btn-' + name).classList.add('active');
-  if (name === 'analytics') loadAnalytics();
-  if (name === 'archive') renderTree(archiveData);
-}
-
-// ── Terminal ───────────────────────────────────────────────
-function appendLog(text) {
-  const term = document.getElementById('terminal-log');
-  const div = document.createElement('div');
-  div.textContent = text;
-  term.appendChild(div);
-  term.scrollTop = term.scrollHeight;
-}
-
-// ── Crawler socket events ──────────────────────────────────
-socket.on('crawl_progress', d => { if(d.title) appendLog('[OK] ' + d.title); });
-socket.on('terminal_output', d => appendLog(d.line));
-socket.on('crawl_status', d => {
-  const badge = document.getElementById('crawler-badge');
-  const btnStart = document.getElementById('btn-start');
-  const btnStop = document.getElementById('btn-stop');
-  const bar = document.getElementById('crawler-progress');
-  if (d.status === 'running') {
-    badge.textContent = 'Running';
-    badge.style.cssText = 'background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)';
-    btnStart.classList.add('hidden'); btnStop.classList.remove('hidden'); bar.classList.add('active');
-  } else if (d.status === 'initializing') {
-    badge.textContent = 'Initializing';
-    badge.style.cssText = 'background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)';
-    bar.classList.add('active');
-    appendLog('// ' + (d.message || 'Initializing...'));
-  } else {
-    badge.textContent = 'Idle';
-    badge.style.cssText = 'background:var(--badge-idle-bg);color:var(--badge-idle-text);border:1px solid var(--input-border)';
-    btnStart.classList.remove('hidden'); btnStop.classList.add('hidden'); bar.classList.remove('active');
-    appendLog('// Crawl complete.');
-    setTimeout(() => { fetchOverview(); fetchArchive(); fetchRecentPapers(); }, 2000);
-  }
-});
-
-function startCrawler() {
-  const t = Math.min(Math.max(parseInt(document.getElementById('target-count').value)||20, 1), 250);
-  appendLog('// Starting crawler — target: ' + t + ' papers');
-  fetch('/api/crawler/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({target:t}) })
-    .then(r=>r.json()).then(d => { if(d.status!=='success') appendLog('// Error: '+d.message); });
-}
-function stopCrawler() { fetch('/api/crawler/stop', {method:'POST'}); }
-fetch('/api/crawler/status').then(r=>r.json()).then(d => { if(d.status==='running') socket.emit('crawl_status',{status:'running'}); });
-
-// ── Helper for fetch with error handling ──────────────────
-function safeFetch(url, onSuccess, onError = null) {
-  fetch(url)
-    .then(r => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
-    .then(onSuccess)
-    .catch(err => {
-      console.error(`Error fetching ${url}:`, err);
-      if (onError) onError(err);
-    });
-}
-
-// ── Stats ──────────────────────────────────────────────────
-function fetchOverview() {
-  console.log('Fetching overview...');
-  safeFetch('/api/analytics/overview', d => {
-    console.log('Overview data received:', d);
-    try {
-      document.getElementById('stat-total').textContent = d.total_papers.toLocaleString();
-      document.getElementById('stat-authors').textContent = d.total_authors.toLocaleString();
-      document.getElementById('stat-faculties').textContent = d.total_faculties;
-      document.getElementById('stat-oa').textContent = d.oa_percentage + '%';
-      document.getElementById('stat-pdfs').textContent = d.papers_with_local_pdf;
-      console.log('Overview updated successfully');
-    } catch (err) {
-      console.error('Error updating overview DOM:', err);
-    }
-  }, (err) => {
-    console.error('Failed to fetch overview:', err);
-    // Set default values on error
-    document.getElementById('stat-total').textContent = '0';
-    document.getElementById('stat-authors').textContent = '0';
-    document.getElementById('stat-faculties').textContent = '0';
-    document.getElementById('stat-oa').textContent = '0%';
-    document.getElementById('stat-pdfs').textContent = '0';
-  });
-}
-
-// ── Recent papers ──────────────────────────────────────────
-function fetchRecentPapers() {
-  fetch('/api/analytics/recent-papers?limit=8').then(r=>r.json()).then(papers => {
-    const el = document.getElementById('recent-papers');
-    if (!papers.length) { el.innerHTML = '<p class="text-sm" style="color:var(--text-muted)">No papers yet.</p>'; return; }
-    el.innerHTML = papers.map(p => `
-      <div class="row-hover flex justify-between items-start p-3 cursor-pointer" onclick="openPaperModal(${p.id})">
-        <div class="flex-1 min-w-0 pr-4">
-          <p class="text-sm font-medium truncate" style="color:var(--text)">${p.title}</p>
-          <p class="text-xs mt-0.5" style="color:var(--text-muted)">${p.authors.join(', ')}</p>
-        </div>
-        <span class="text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${p.is_oa ? 'badge-oa' : 'badge-restricted'}">${p.is_oa ? 'Open Access' : 'Restricted'}</span>
-      </div>`).join('');
-  });
-}
-
-// ── Archive ────────────────────────────────────────────────
-function fetchArchive() {
-  fetch('/api/papers/tree').then(r=>r.json()).then(d => { archiveData = d.data; renderTree(archiveData); });
-}
-function filterArchive(q) { renderTree(archiveData, q.toLowerCase().trim()); }
-
-function renderTree(data, q='') {
-  const container = document.getElementById('tree-container');
-  let html = ''; let total = 0;
-  for (const [faculty, depts] of Object.entries(data)) {
-    let fHtml = ''; let fCount = 0;
-    for (const [dept, papers] of Object.entries(depts)) {
-      const filtered = q ? papers.filter(p => (p.title||'').toLowerCase().includes(q)||(p.doi||'').toLowerCase().includes(q)) : papers;
-      if (!filtered.length) continue;
-      fCount += filtered.length; total += filtered.length;
-      fHtml += `<div class="tree-node mb-3">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-3 h-3 flex-shrink-0" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          <span class="text-xs font-semibold" style="color:var(--accent)">${dept}</span>
-          <span class="text-xs px-1.5 rounded" style="background:var(--input-bg);color:var(--text-muted)">${filtered.length}</span>
-        </div>
-        <ul class="space-y-1.5 ml-2">` +
-        filtered.map(p => `<li class="row-hover p-3 rounded-lg cursor-pointer" onclick="openPaperModal(${p.id})">
-          <p class="text-sm font-medium leading-snug" style="color:var(--text)">${p.title||'Untitled'}</p>
-          <div class="flex justify-between items-center mt-1.5 gap-2 flex-wrap">
-            <span class="text-xs font-mono" style="color:var(--text-muted)">${p.doi ? p.doi.replace('https://doi.org/','') : (p.url||'').split('/')[2]||''}</span>
-            <span class="text-xs font-medium ${p.has_local_pdf ? 'badge-oa' : 'badge-restricted'} px-2 py-0.5 rounded-full">${p.has_local_pdf ? 'PDF Stored' : 'External'}</span>
+  <!--  -->
+  <!-- TAB: COMPARATOR (Multi-Institution Comparison Engine) -->
+  <!--  -->
+  <div id="tab-comparator" class="tab-content hidden">
+    
+    <!-- Institution Selection -->
+    <div class="surface rounded-2xl p-6 mb-5">
+      <p class="section-label">Multi-Institution Comparator</p>
+      <p class="text-xs mb-4" style="color:var(--text-muted)">Compare up to 10 African institutions across strategic metrics. Select institutions by ROR ID or name.</p>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="lg:col-span-2">
+          <label class="block text-xs mb-2 font-medium" style="color:var(--text-dim)">Add Institution (ROR ID or Name)</label>
+          <div class="flex gap-2">
+            <input type="text" id="comp-institution-input" placeholder="e.g., https://ror.org/03qcnxw14 or University of Lagos" class="flex-1"/>
+            <button onclick="addInstitutionToComparison()" class="btn-primary">Add</button>
           </div>
-        </li>`).join('') + `</ul></div>`;
-    }
-    if (!fCount) continue;
-    html += `<div class="mb-5">
-      <div class="flex items-center gap-2 border-b pb-2 mb-3" style="border-color:var(--border)">
-        <svg class="w-4 h-4" style="color:var(--text-dim)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
-        <span class="text-sm font-bold" style="color:var(--text)">${faculty}</span>
-        <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:rgba(99,102,241,0.15);color:var(--accent)">${fCount}</span>
+        </div>
+        <div>
+          <label class="block text-xs mb-2 font-medium" style="color:var(--text-dim)">Quick Add</label>
+          <select id="comp-quick-add" onchange="quickAddInstitution(this.value)" class="w-full">
+            <option value="">Select institution...</option>
+            <option value="https://ror.org/03qcnxw14">University of Lagos (UNILAG)</option>
+            <option value="https://ror.org/0545s4788">Covenant University</option>
+            <option value="https://ror.org/01js2sh04">University of Ibadan (UI)</option>
+            <option value="https://ror.org/03rp50x72">University of Cape Town (UCT)</option>
+            <option value="https://ror.org/05bk57929">Stellenbosch University</option>
+            <option value="https://ror.org/03s7gtk40">University of Nairobi</option>
+            <option value="https://ror.org/03s1g0h21">Makerere University</option>
+            <option value="https://ror.org/05qghxh33">University of Ghana</option>
+            <option value="https://ror.org/02kst3000">Addis Ababa University</option>
+            <option value="https://ror.org/00g0c5a86">KNUST Ghana</option>
+          </select>
+        </div>
       </div>
-      ${fHtml}</div>`;
-  }
-  container.innerHTML = html || `<p class="text-sm" style="color:var(--text-muted)">${q ? 'No results for "'+q+'"' : 'No papers indexed yet. Run the crawler to get started.'}</p>`;
-  document.getElementById('total-papers-badge').textContent = total.toLocaleString() + ' papers';
-}
-
-// ── Paper modal ────────────────────────────────────────────
-function openPaperModal(id) {
-  fetch('/api/papers/' + id).then(r=>r.json()).then(p => {
-    document.getElementById('modal-title').textContent = p.title;
-    const pubDate = p.publication_date ? p.publication_date.split('T')[0] : '—';
-    const authors = (p.authors||[]).map(a=>a.name).join('; ') || '—';
-    const faculties = (p.collections||[]).map(c=>c.faculty).filter((v,i,a)=>a.indexOf(v)===i).join(', ') || '—';
-    const depts = (p.collections||[]).map(c=>c.name).join(', ') || '—';
-    const fileBtn = p.file && p.file.has_local_pdf
-      ? `<a href="${p.file.download_url}" class="btn-primary text-sm">
-           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-           Download PDF (${p.file.access_policy})
-         </a>`
-      : (p.pdf_url ? `<a href="${p.pdf_url}" target="_blank" class="btn-primary text-sm">Open PDF Source</a>` : `<span class="text-xs" style="color:var(--text-muted)">No PDF available</span>`);
-    const doiBtn = p.doi ? `<a href="${p.doi}" target="_blank" class="btn-ghost text-xs">View DOI</a>` : '';
-
-    document.getElementById('modal-body').innerHTML = `
-      <div class="space-y-4">
-        <div class="flex gap-2 flex-wrap">${fileBtn}${doiBtn}</div>
-        <div class="rounded-xl p-5 space-y-2.5" style="background:var(--input-bg)">
-          <p class="section-label">Dublin Core Metadata</p>
-          ${mRow('dc.title', p.dc?.title||p.title)}
-          ${mRow('dc.contributor.author', authors)}
-          ${mRow('dc.date.issued', pubDate)}
-          ${mRow('dc.identifier.doi', p.doi||'—')}
-          ${mRow('dc.identifier.uri', p.dc?.identifier_uri||'—')}
-          ${mRow('dc.rights', p.dc?.rights||'—')}
-          ${mRow('dc.description.provenance', p.dc?.description_provenance||'—')}
-          ${mRow('dc.subject — Faculty', faculties)}
-          ${mRow('dc.subject — Department', depts)}
-          ${mRow('dc.source', p.source_repository||'—')}
-        </div>
-        ${p.file?.has_local_pdf ? `<div class="rounded-xl p-5" style="background:var(--input-bg)"><p class="section-label">Local File</p>${mRow('Access Policy',p.file.access_policy)}${mRow('SHA-256',p.file.sha256?p.file.sha256.substring(0,32)+'...':'—')}</div>` : ''}
-        ${p.abstract ? `<div class="rounded-xl p-5" style="background:var(--input-bg)"><p class="section-label">Abstract</p><p class="text-sm leading-relaxed" style="color:var(--text-dim)">${p.abstract}</p></div>` : ''}
-      </div>`;
-    document.getElementById('paper-modal').classList.add('open');
-  });
-}
-function mRow(label, value) {
-  return `<div class="flex gap-3 text-sm border-b pb-2 last:border-0 last:pb-0" style="border-color:var(--border)">
-    <span class="font-mono text-xs w-44 flex-shrink-0 pt-0.5" style="color:var(--text-muted)">${label}</span>
-    <span class="break-all" style="color:var(--text)">${value}</span>
-  </div>`;
-}
-function closePaperModal() { document.getElementById('paper-modal').classList.remove('open'); }
-document.addEventListener('keydown', e => { if(e.key==='Escape') closePaperModal(); });
-
-// ── Analytics ──────────────────────────────────────────────
-const COLORS = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#84cc16','#f97316','#14b8a6','#a855f7','#3b82f6','#e11d48','#0ea5e9','#d946ef'];
-Chart.defaults.color = '#64748b';
-Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
-
-function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
-
-function loadAnalytics() {
-  console.log('Loading analytics charts...');
-  chartDefaults();
-  loadFacultiesDropdown();
-  loadImpactCards();
-  // Ensure overview sub-tab is visible before rendering charts
-  switchAnalyticsTab('overview', document.getElementById('atab-btn-overview'));
-  console.log('Loading individual charts...');
-  reloadYearChart();
-  reloadFacultyChart();
-  reloadOAChart();
-  reloadAuthorsChart();
-  loadFacultyOAChart();
-  loadGrowthChart();
-  console.log('All analytics charts loaded');
-}
-
-// Simple, reliable chart loading - just like the dropdowns
-function forceLoadAnalytics() {
-  const btn = document.getElementById('load-charts-btn');
-  if (!btn) return;
-  
-  btn.innerHTML = 'Loading...';
-  btn.disabled = true;
-  
-  console.log('Loading all charts...');
-  
-  // Just call the same functions the dropdowns call - no delays, no complexity
-  try {
-    reloadYearChart();
-    reloadFacultyChart();
-    reloadOAChart();
-    reloadAuthorsChart();
-    loadFacultyOAChart();
-    loadGrowthChart();
-    
-    // Success
-    btn.innerHTML = 'Loaded';
-    btn.style.background = '#10b981';
-    
-    setTimeout(() => {
-      btn.innerHTML = 'Refresh';
-      btn.style.background = '#6366f1';
-      btn.disabled = false;
-    }, 1500);
-    
-    console.log('All charts loaded');
-    
-  } catch (err) {
-    console.error('Error:', err);
-    btn.innerHTML = 'Error - Try Again';
-    btn.style.background = '#ef4444';
-    btn.disabled = false;
-  }
-}
-
-function reloadYearChart() {
-  const mode = document.getElementById('year-chart-mode').value;
-  if (mode === 'stacked') {
-    if (yearStackedCache) { renderStackedYear(yearStackedCache); return; }
-    safeFetch('/api/analytics/papers-by-year-faculty', d => { 
-      console.log('Year stacked data:', d);
-      yearStackedCache=d; 
-      renderStackedYear(d); 
-    }, err => {
-      console.error('Failed to load year stacked chart:', err);
-      document.getElementById('chart-year').innerHTML = '<p class="text-sm text-center" style="color:var(--text-muted);padding:2rem;">Failed to load chart data</p>';
-    });
-  } else {
-    if (yearDataCache) { renderSimpleYear(yearDataCache); return; }
-    safeFetch('/api/analytics/publications-by-year', d => { 
-      console.log('Year simple data:', d);
-      yearDataCache=d; 
-      renderSimpleYear(d); 
-    }, err => {
-      console.error('Failed to load year chart:', err);
-      document.getElementById('chart-year').innerHTML = '<p class="text-sm text-center" style="color:var(--text-muted);padding:2rem;">Failed to load chart data</p>';
-    });
-  }
-}
-function renderSimpleYear(data) {
-  destroyChart('year');
-  charts['year'] = new Chart(document.getElementById('chart-year'), {
-    type:'bar', data:{ labels:data.map(d=>d.year), datasets:[{label:'Papers',data:data.map(d=>d.count),backgroundColor:'rgba(99,102,241,0.7)',borderRadius:4}] },
-    options:{ plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}},y:{beginAtZero:true}}, onClick:(e,el)=>{ if(el[0]){document.getElementById('search-year-from').value=data[el[0].index].year;document.getElementById('search-year-to').value=data[el[0].index].year;runSearch();} } }
-  });
-}
-function renderStackedYear(data) {
-  destroyChart('year');
-  const years=[...new Set(data.map(d=>d.year))].sort();
-  const facs=[...new Set(data.map(d=>d.faculty))];
-  charts['year'] = new Chart(document.getElementById('chart-year'), {
-    type:'bar',
-    data:{ labels:years, datasets:facs.map((f,i)=>({ label:f.replace('Faculty of ','').replace('College of ',''), data:years.map(y=>{const r=data.find(d=>d.year===y&&d.faculty===f);return r?r.count:0;}), backgroundColor:COLORS[i%COLORS.length], borderRadius:2 })) },
-    options:{ plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}}, scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true}} }
-  });
-}
-
-function reloadFacultyChart() {
-  const type=document.getElementById('faculty-chart-type').value;
-  if(facultyDataCache){renderFacultyChart(facultyDataCache,type);return;}
-  safeFetch('/api/analytics/papers-by-faculty', d => {
-    console.log('Faculty data:', d);
-    facultyDataCache=d;
-    renderFacultyChart(d,type);
-  }, err => {
-    console.error('Failed to load faculty chart:', err);
-    document.getElementById('chart-faculty').innerHTML = '<p class="text-sm text-center" style="color:var(--text-muted);padding:2rem;">Failed to load chart data</p>';
-  });
-}
-function renderFacultyChart(data,type) {
-  destroyChart('faculty');
-  const labels=data.map(d=>d.faculty.replace('Faculty of ','').replace('College of ',''));
-  charts['faculty'] = new Chart(document.getElementById('chart-faculty'), {
-    type, data:{labels,datasets:[{data:data.map(d=>d.count),backgroundColor:COLORS,borderRadius:type==='bar'?4:0,borderWidth:type==='doughnut'?0:1}]},
-    options:{ indexAxis:type==='bar'?'y':undefined, plugins:{legend:{display:type==='doughnut',position:'bottom',labels:{font:{size:10},padding:8}}}, scales:type==='bar'?{x:{beginAtZero:true},y:{grid:{display:false}}}:{},
-      onClick:(e,el)=>{ if(el[0]){document.getElementById('search-faculty').value=data[el[0].index].faculty;runSearch();} } }
-  });
-}
-
-function reloadOAChart() {
-  const type=document.getElementById('oa-chart-type').value;
-  fetch('/api/analytics/open-access-breakdown').then(r=>r.json()).then(data=>{
-    destroyChart('oa');
-    charts['oa'] = new Chart(document.getElementById('chart-oa'), {
-      type, data:{labels:data.map(d=>d.label),datasets:[{data:data.map(d=>d.value),backgroundColor:['#10b981','#ef4444','#64748b'],borderWidth:0,borderRadius:type==='bar'?4:0}]},
-      options:{ plugins:{legend:{display:type==='doughnut',position:'bottom',labels:{font:{size:11},padding:16}}}, scales:type==='bar'?{x:{grid:{display:false}},y:{beginAtZero:true}}:{}, cutout:type==='doughnut'?'65%':undefined }
-    });
-  });
-}
-
-function reloadAuthorsChart() {
-  const limit=document.getElementById('authors-limit').value;
-  fetch(`/api/analytics/top-authors?limit=${limit}`).then(r=>r.json()).then(data=>{
-    destroyChart('authors');
-    charts['authors'] = new Chart(document.getElementById('chart-authors'), {
-      type:'bar', data:{labels:data.map(d=>d.author),datasets:[{label:'Papers',data:data.map(d=>d.count),backgroundColor:'rgba(139,92,246,0.7)',borderRadius:4}]},
-      options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true},y:{grid:{display:false},ticks:{font:{size:11}}}},
-        onClick:(e,el)=>{ if(el[0]){document.getElementById('search-q').value=data[el[0].index].author;runSearch();} } }
-    });
-  });
-}
-
-function loadFacultyOAChart() {
-  fetch('/api/analytics/faculty-oa-breakdown').then(r=>r.json()).then(data=>{
-    destroyChart('faculty-oa');
-    const sorted=data.sort((a,b)=>(b.open+b.restricted)-(a.open+a.restricted)).slice(0,10);
-    charts['faculty-oa'] = new Chart(document.getElementById('chart-faculty-oa'), {
-      type:'bar',
-      data:{ labels:sorted.map(d=>d.faculty.replace('Faculty of ','').replace('College of ','')),
-        datasets:[{label:'Open Access',data:sorted.map(d=>d.open),backgroundColor:'rgba(16,185,129,0.7)',borderRadius:4},{label:'Restricted',data:sorted.map(d=>d.restricted),backgroundColor:'rgba(239,68,68,0.5)',borderRadius:4}] },
-      options:{ indexAxis:'y', plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}, scales:{x:{beginAtZero:true},y:{grid:{display:false}}} }
-    });
-  });
-}
-
-function loadGrowthChart() {
-  fetch('/api/analytics/growth-rate').then(r=>r.json()).then(data=>{
-    destroyChart('growth');
-    charts['growth'] = new Chart(document.getElementById('chart-growth'), {
-      type:'line', data:{labels:data.map(d=>d.session),datasets:[{label:'Papers Added',data:data.map(d=>d.count),borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,0.1)',fill:true,tension:0.4,pointRadius:5,pointHoverRadius:7}]},
-      options:{ plugins:{legend:{display:false}}, scales:{x:{display:false},y:{beginAtZero:true}} }
-    });
-  });
-}
-
-// ── Analytics sub-tabs ────────────────────────────────────
-let currentAnalyticsTab = 'overview';
-function switchAnalyticsTab(name, btn) {
-  document.querySelectorAll('.atab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('[id^="atab-btn-"]').forEach(el => el.classList.remove('active'));
-  document.getElementById('atab-' + name).classList.remove('hidden');
-  if (btn) btn.classList.add('active');
-  currentAnalyticsTab = name;
-  // Load data for sub-tabs that need it (not overview — that's loaded by loadAnalytics)
-  if (name === 'network') loadNetworkTab();
-  if (name === 'trends') loadTrendsTab();
-  if (name === 'language') loadLanguageTab();
-  if (name === 'compare') loadCompareDropdowns();
-}
-
-// ── Impact cards ───────────────────────────────────────────
-function loadImpactCards() {
-  fetch('/api/analytics/impact-metrics').then(r=>r.json()).then(d => {
-    document.getElementById('impact-cards').innerHTML = [
-      {label:'DOI Coverage', val: d.doi_rate+'%', color:'#6366f1'},
-      {label:'Open Access Rate', val: d.oa_rate+'%', color:'#10b981'},
-      {label:'PDF Coverage', val: d.pdf_rate+'%', color:'#f59e0b'},
-      {label:'Years Covered', val: d.years_covered, color:'#0ea5e9'},
-    ].map(c=>`<div class="surface rounded-xl p-4 stat-card">
-      <p class="section-label">${c.label}</p>
-      <p class="text-2xl font-bold" style="color:${c.color}">${c.val}</p>
-    </div>`).join('');
-  });
-}
-
-// ── Compare tab ────────────────────────────────────────────
-function loadCompareDropdowns() {
-  fetch('/api/analytics/faculties').then(r=>r.json()).then(faculties => {
-    ['cmp-faculty-a','cmp-faculty-b','cmp-faculty-c','dept-cmp-faculty'].forEach(id => {
-      const sel = document.getElementById(id);
-      if (sel.options.length > 1) return;
-      faculties.forEach(f => {
-        const o = document.createElement('option');
-        o.value = f; o.textContent = f.replace('Faculty of ','').replace('College of ','');
-        sel.appendChild(o);
-      });
-    });
-  });
-}
-
-function runFacultyComparison() {
-  const a = document.getElementById('cmp-faculty-a').value;
-  const b = document.getElementById('cmp-faculty-b').value;
-  const c = document.getElementById('cmp-faculty-c').value;
-  const selected = [a,b,c].filter(Boolean);
-  if (selected.length < 2) { alert('Select at least 2 faculties'); return; }
-  const params = selected.map(f=>'faculty='+encodeURIComponent(f)).join('&');
-  fetch('/api/analytics/faculty-comparison?'+params).then(r=>r.json()).then(data => {
-    const METRICS = ['total_papers','open_access','restricted','oa_rate','unique_authors','departments'];
-    const LABELS = ['Total Papers','Open Access','Restricted','OA Rate (%)','Unique Authors','Departments'];
-    const facNames = Object.keys(data);
-    const el = document.getElementById('faculty-comparison-result');
-    el.innerHTML = `<div class="overflow-x-auto"><table class="w-full text-sm">
-      <thead><tr style="border-bottom:1px solid var(--border)">
-        <th class="text-left py-2 font-semibold" style="color:var(--text-muted)">Metric</th>
-        ${facNames.map(f=>`<th class="text-right py-2 font-semibold" style="color:var(--accent)">${f.replace('Faculty of ','').replace('College of ','')}</th>`).join('')}
-      </tr></thead>
-      <tbody>${METRICS.map((m,i)=>`<tr style="border-bottom:1px solid var(--border)">
-        <td class="py-2" style="color:var(--text-dim)">${LABELS[i]}</td>
-        ${facNames.map(f=>`<td class="py-2 text-right font-semibold" style="color:var(--text)">${data[f]?.[m] ?? '—'}</td>`).join('')}
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-  });
-}
-
-function runDeptComparison() {
-  const faculty = document.getElementById('dept-cmp-faculty').value;
-  if (!faculty) return;
-  fetch('/api/analytics/department-comparison?faculty='+encodeURIComponent(faculty)).then(r=>r.json()).then(data => {
-    destroyChart('dept-compare');
-    const depts = Object.keys(data).sort((a,b)=>data[b].total-data[a].total);
-    charts['dept-compare'] = new Chart(document.getElementById('chart-dept-compare'), {
-      type:'bar',
-      data:{ labels:depts,
-        datasets:[
-          {label:'Open Access', data:depts.map(d=>data[d].open_access), backgroundColor:'rgba(16,185,129,0.7)', borderRadius:4},
-          {label:'Restricted', data:depts.map(d=>data[d].restricted), backgroundColor:'rgba(239,68,68,0.5)', borderRadius:4}
-        ]},
-      options:{indexAxis:'y', plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:false,beginAtZero:true},y:{grid:{display:false}}}}
-    });
-  });
-}
-
-// ── Network tab ────────────────────────────────────────────
-let networkSearchTimer = null;
-let currentNetworkAuthor = null;
-
-function debounceNetworkSearch() {
-  clearTimeout(networkSearchTimer);
-  networkSearchTimer = setTimeout(searchNetworkAuthor, 300);
-}
-
-function searchNetworkAuthor() {
-  const query = document.getElementById('network-search-input').value.trim();
-  const suggestionsEl = document.getElementById('network-suggestions');
-  
-  if (query.length < 2) {
-    suggestionsEl.innerHTML = '';
-    document.getElementById('network-result').classList.add('hidden');
-    return;
-  }
-  
-  fetch(`/api/analytics/authors-search?q=${encodeURIComponent(query)}&limit=5`)
-    .then(r => r.json())
-    .then(authors => {
-      if (!authors.length) {
-        suggestionsEl.innerHTML = '<p class="text-xs p-2" style="color:var(--text-muted)">No researchers found</p>';
-        return;
-      }
-      suggestionsEl.innerHTML = authors.map(a => `
-        <div class="row-hover p-2 rounded-lg cursor-pointer" onclick="loadNetworkForAuthor('${a.name.replace(/'/g, "\\'")}')">
-          <p class="text-sm" style="color:var(--text)">${a.name}</p>
-          <p class="text-xs" style="color:var(--text-muted)">${a.papers} papers</p>
-        </div>
-      `).join('');
-    });
-}
-
-function loadNetworkForAuthor(authorName) {
-  currentNetworkAuthor = authorName;
-  document.getElementById('network-suggestions').innerHTML = '';
-  document.getElementById('network-search-input').value = authorName;
-  document.getElementById('network-researcher-name').textContent = authorName;
-  document.getElementById('network-result').classList.remove('hidden');
-  
-  fetch(`/api/analytics/author-network?author=${encodeURIComponent(authorName)}`)
-    .then(r => r.json())
-    .then(data => {
-      networkData = data.edges;
-      const tableEl = document.getElementById('network-table');
       
-      if (!networkData.length) {
-        tableEl.innerHTML = '<p class="text-xs" style="color:var(--text-muted)">No collaborations found.</p>';
-        return;
-      }
+      <!-- Selected Institutions -->
+      <div id="comp-selected-institutions" class="flex gap-2 flex-wrap mb-4"></div>
       
-      // Simple table showing collaborators
-      tableEl.innerHTML = `
-        <table class="w-full text-sm">
-          <thead>
-            <tr style="border-bottom:1px solid var(--border)">
-              <th class="text-left py-2 font-semibold" style="color:var(--text-muted)">Collaborator</th>
-              <th class="text-right py-2 font-semibold" style="color:var(--text-muted)">Joint Papers</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${networkData.map(edge => {
-              const collaborator = edge.source === authorName ? edge.target : edge.source;
-              return `
-                <tr class="row-hover" style="border-bottom:1px solid var(--border)">
-                  <td class="py-2" style="color:var(--text)">${collaborator}</td>
-                  <td class="py-2 text-right">
-                    <span class="px-2 py-1 rounded-full text-xs font-semibold" style="background:rgba(99,102,241,0.15);color:var(--accent)">
-                      ${edge.weight}
-                    </span>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      `;
-    });
-}
-
-function loadNetworkTab() {
-  // Don't load anything by default
-}
-
-// ── Trends tab ─────────────────────────────────────────────
-let trendsData = null;
-let activeTrend = null;
-function loadTrendsTab() {
-  if (trendsData) { renderTrendsChips(); return; }
-  fetch('/api/analytics/research-trends').then(r=>r.json()).then(data => {
-    trendsData = data;
-    renderTrendsChips();
-  });
-}
-function renderTrendsChips() {
-  const el = document.getElementById('trends-chips');
-  el.innerHTML = trendsData.map((t,i)=>`
-    <button class="chip ${i===0?'active':''}" onclick="selectTrend(${i},this)">${t.topic} <span style="opacity:0.6">(${t.total})</span></button>
-  `).join('');
-  selectTrend(0, el.querySelector('.chip'));
-}
-function selectTrend(idx, btn) {
-  document.querySelectorAll('#trends-chips .chip').forEach(c=>c.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  const t = trendsData[idx];
-  destroyChart('trends');
-  charts['trends'] = new Chart(document.getElementById('chart-trends'), {
-    type:'line',
-    data:{ labels:t.by_year.map(d=>d.year), datasets:[{label:t.topic, data:t.by_year.map(d=>d.count), borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,0.1)', fill:true, tension:0.4, pointRadius:5}]},
-    options:{plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}},y:{beginAtZero:true}}}
-  });
-}
-
-// ── Language tab ───────────────────────────────────────────
-function loadLanguageTab() {
-  fetch('/api/analytics/language-research').then(r=>r.json()).then(data => {
-    // Keyword chart
-    destroyChart('language-kw');
-    const kws = data.top_keywords.slice(0,15);
-    charts['language-kw'] = new Chart(document.getElementById('chart-language-kw'), {
-      type:'bar',
-      data:{ labels:kws.map(k=>k.keyword), datasets:[{data:kws.map(k=>k.count), backgroundColor:COLORS, borderRadius:4}]},
-      options:{indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true},y:{grid:{display:false},ticks:{font:{size:11}}}}}
-    });
-    // Papers list
-    const el = document.getElementById('language-papers');
-    el.innerHTML = data.papers && data.papers.length
-      ? data.papers.map(p=>`<div class="row-hover p-3 rounded-lg cursor-pointer" onclick="openPaperModal(${p.id})">
-          <p class="text-sm font-medium" style="color:var(--text)">${p.title}</p>
-          <p class="text-xs mt-1" style="color:var(--text-muted)">${p.authors.join(', ')} ${p.year?'· '+p.year:''}</p>
-        </div>`).join('')
-      : '<p class="text-xs" style="color:var(--text-muted)">No language/culture papers found yet.</p>';
-  });
-}
-
-// ── Lecturer profile tab ───────────────────────────────────
-let authorSearchTimer = null;
-function debounceAuthorSearch() {
-  clearTimeout(authorSearchTimer);
-  authorSearchTimer = setTimeout(() => {
-    const q = document.getElementById('lecturer-search-input').value.trim();
-    if (q.length < 2) { document.getElementById('author-suggestions').innerHTML=''; return; }
-    fetch('/api/analytics/authors-search?q='+encodeURIComponent(q)+'&limit=10').then(r=>r.json()).then(authors => {
-      document.getElementById('author-suggestions').innerHTML = authors.map(a=>
-        `<button class="chip" onclick="loadLecturerProfile('${a.name.replace(/'/g,"\\'")}')">
-          ${a.name} <span style="opacity:0.6">(${a.papers})</span>
-        </button>`
-      ).join('');
-    });
-  }, 300);
-}
-
-function loadLecturerProfile(name) {
-  fetch('/api/analytics/lecturer-profile?name='+encodeURIComponent(name)).then(r=>r.json()).then(p => {
-    if (p.error) { document.getElementById('lecturer-profile-result').innerHTML=`<p class="text-sm" style="color:var(--text-muted)">${p.error}</p>`; return; }
-    const el = document.getElementById('lecturer-profile-result');
-    el.innerHTML = `
+      <div class="flex gap-2">
+        <button onclick="runComparison()" class="btn-primary" id="comp-run-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Run Comparison
+        </button>
+        <button onclick="generateSenateReport()" class="btn-ghost">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Generate Senate Report
+        </button>
+        <button onclick="clearComparison()" class="btn-ghost text-xs">Clear All</button>
+      </div>
+    </div>
+    
+    <!-- Comparison Results -->
+    <div id="comp-results" class="hidden">
+      
+      <!-- Executive Summary Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        ${[['Total Papers',p.total_papers,'#6366f1'],['Open Access',p.open_access,'#10b981'],['OA Rate',p.oa_rate+'%','#f59e0b'],['Active Years',p.active_years.length,'#0ea5e9']].map(([l,v,c])=>`
-          <div class="surface rounded-xl p-4"><p class="section-label">${l}</p><p class="text-2xl font-bold" style="color:${c}">${v}</p></div>`).join('')}
+        <div class="surface rounded-xl p-4">
+          <p class="section-label">Total Papers</p>
+          <p class="text-3xl font-bold" style="color:var(--accent)" id="comp-total-papers">-</p>
+        </div>
+        <div class="surface rounded-xl p-4">
+          <p class="section-label">Total Authors</p>
+          <p class="text-3xl font-bold" style="color:var(--text)" id="comp-total-authors">-</p>
+        </div>
+        <div class="surface rounded-xl p-4">
+          <p class="section-label">Avg OA Rate</p>
+          <p class="text-3xl font-bold" style="color:var(--success)" id="comp-avg-oa">-</p>
+        </div>
+        <div class="surface rounded-xl p-4">
+          <p class="section-label">Collaborations</p>
+          <p class="text-3xl font-bold" style="color:var(--warning)" id="comp-collaborations">-</p>
+        </div>
       </div>
+      
+      <!-- Comparison Table -->
+      <div class="surface rounded-2xl p-6 mb-5">
+        <p class="section-label">Detailed Comparison Matrix</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="comp-table">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th class="text-left py-3 px-2" style="color:var(--text-muted)">Institution</th>
+                <th class="text-right py-3 px-2" style="color:var(--text-muted)">Papers</th>
+                <th class="text-right py-3 px-2" style="color:var(--text-muted)">Authors</th>
+                <th class="text-right py-3 px-2" style="color:var(--text-muted)">OA Rate</th>
+                <th class="text-right py-3 px-2" style="color:var(--text-muted)">TK Rate</th>
+                <th class="text-right py-3 px-2" style="color:var(--text-muted)">Patents</th>
+                <th class="text-right py-3 px-2" style="color:var(--text-muted)">Growth</th>
+              </tr>
+            </thead>
+            <tbody id="comp-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Rankings -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <div class="surface rounded-xl p-4">
-          <p class="section-label">Faculties & Departments</p>
-          ${p.faculties.map(f=>`<span class="chip mr-1 mb-1">${f.replace('Faculty of ','').replace('College of ','')}</span>`).join('')}
-          <div class="mt-2">${p.departments.map(d=>`<span class="chip mr-1 mb-1 text-xs">${d}</span>`).join('')}</div>
+        <div class="surface rounded-2xl p-6">
+          <p class="section-label">Research Volume Leader</p>
+          <div id="comp-rank-volume" class="space-y-2"></div>
         </div>
-        <div class="surface rounded-xl p-4">
-          <p class="section-label">Top Collaborators</p>
-          ${p.top_collaborators.slice(0,6).map(c=>`<div class="flex justify-between py-1 text-xs border-b" style="border-color:var(--border)">
-            <span style="color:var(--text)">${c.name}</span>
-            <span style="color:var(--accent)">${c.papers} papers</span>
-          </div>`).join('')}
+        <div class="surface rounded-2xl p-6">
+          <p class="section-label">Open Access Champion</p>
+          <div id="comp-rank-oa" class="space-y-2"></div>
+        </div>
+        <div class="surface rounded-2xl p-6">
+          <p class="section-label">Indigenous Knowledge Leader</p>
+          <div id="comp-rank-tk" class="space-y-2"></div>
+        </div>
+        <div class="surface rounded-2xl p-6">
+          <p class="section-label">Innovation Commercialization</p>
+          <div id="comp-rank-patent" class="space-y-2"></div>
         </div>
       </div>
-      <div class="surface rounded-xl p-4">
-        <p class="section-label">Publications (${p.papers.length} shown)</p>
-        <div class="space-y-1.5 overflow-y-auto" style="max-height:300px">
-          ${p.papers.map(paper=>`<div class="row-hover p-2.5 rounded-lg cursor-pointer" onclick="openPaperModal(${paper.id})">
-            <p class="text-sm font-medium" style="color:var(--text)">${paper.title}</p>
-            <p class="text-xs mt-0.5" style="color:var(--text-muted)">${paper.year||'—'} · <span class="${paper.is_oa?'badge-oa':'badge-restricted'} px-1.5 py-0.5 rounded text-xs">${paper.is_oa?'OA':'Restricted'}</span></p>
-          </div>`).join('')}
+      
+      <!-- Strategic Insights -->
+      <div class="surface rounded-2xl p-6 mb-5">
+        <p class="section-label">Strategic Insights & Recommendations</p>
+        <div id="comp-insights" class="space-y-3"></div>
+      </div>
+      
+      <!-- Collaboration Mesh Visualization -->
+      <div class="surface rounded-2xl p-6">
+        <p class="section-label">Collaboration Mesh</p>
+        <p class="text-xs mb-4" style="color:var(--text-muted)">Interactive network showing research partnerships between institutions</p>
+        <div id="comp-collaboration-viz" style="height:400px;position:relative;background:var(--input-bg);border-radius:12px;display:flex;align-items:center;justify-center">
+          <p class="text-xs" style="color:var(--text-muted)">Collaboration visualization will appear here</p>
         </div>
-      </div>`;
-  });
-}
-
-// ── Init ───────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM loaded, initializing...');
-  fetchOverview();
-  fetchArchive();
-  fetchRecentPapers();
-  
-  // Don't auto-load analytics - user will click button instead
-  console.log('Ready! Click "Show Analytics Charts" button to load charts.');
-  
-  setInterval(()=>{ if(document.getElementById('crawler-badge').textContent==='Running'){fetchOverview();fetchRecentPapers();} },15000);
-  console.log('Initialization complete');
-});
-</script>
+      </div>
+      
+ <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

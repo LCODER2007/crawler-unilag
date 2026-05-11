@@ -1,110 +1,130 @@
 """
-ORCID Spider - Harvests papers using ORCID IDs of UNILAG staff.
-This is the most accurate way to get papers from specific researchers.
+ORCID Spider - Harvests papers using ORCID IDs from rich staff data.
+Loads staff records with ORCID from {inst}_staff.json.
+No arbitrary limits — crawls all staff with ORCIDs.
 """
 import scrapy
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from uraas.config.institutions import get_registry
+
 
 class ORCIDSpider(scrapy.Spider):
-    """Spider that uses ORCID IDs to harvest papers from specific UNILAG researchers."""
-    
-    name = "orcid_unilag"
+    """Harvests papers from ORCID for all staff members with ORCID IDs."""
+
+    name = "orcid_multi"
     custom_settings = {
         'DOWNLOAD_DELAY': 2.0,
         'RETRY_ENABLED': True,
         'RETRY_TIMES': 3,
+        'CONCURRENT_REQUESTS': 2,
     }
 
-    def start_requests(self):
-        """Load ORCID IDs and query ORCID API for each researcher's works."""
-        orcid_cache = os.path.join(
-            os.path.dirname(__file__), '..', '..', '..', 'data', 'unilag_orcids.json'
+    def __init__(self, institution='unilag', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        registry = get_registry()
+        self.institution_config = registry.get(institution)
+        if not self.institution_config:
+            raise ValueError(f"Institution '{institution}' not found in registry")
+        self.institution_name = self.institution_config.name
+        self.ror_id = self.institution_config.ror
+        self.logger.info(
+            f"ORCID spider for {self.institution_name} | "
+            f"{len(self.institution_config.staff_with_orcid)} staff with ORCIDs"
         )
-        
-        if not os.path.exists(orcid_cache):
-            self.logger.warning("No ORCID cache found. Run find_orcids.py first.")
+
+    def start_requests(self):
+        """Query ORCID API for each staff member that has an ORCID."""
+        staff_with_orcid = self.institution_config.staff_with_orcid
+        if not staff_with_orcid:
+            self.logger.warning(
+                f"No staff with ORCID IDs found for {self.institution_name}. "
+                f"Run scripts/harvest_staff_openalex.py first."
+            )
             return
-        
-        with open(orcid_cache, 'r', encoding='utf-8') as f:
-            orcid_data = json.load(f)
-        
-        # Filter to only those with ORCIDs
-        orcids = [(name, orcid) for name, orcid in orcid_data.items() if orcid]
-        
-        self.logger.info(f"Found {len(orcids)} staff members with ORCID IDs")
-        
-        # Query ORCID API for each person's works
-        for name, orcid_id in orcids[:20]:  # Limit to first 20 to avoid overwhelming
+
+        self.logger.info(f"Querying ORCID API for {len(staff_with_orcid)} researchers")
+        for staff_member in staff_with_orcid:
+            orcid_id = staff_member['orcid']
+            if not orcid_id:
+                continue
             url = f"https://pub.orcid.org/v3.0/{orcid_id}/works"
             yield scrapy.Request(
                 url=url,
                 callback=self.parse_works,
                 headers={'Accept': 'application/json'},
-                meta={'orcid': orcid_id, 'name': name},
-                errback=self.errback_httpbin
+                meta={
+                    'orcid': orcid_id,
+                    'name': staff_member['name'],
+                    'department': staff_member.get('department', ''),
+                    'faculty': staff_member.get('faculty', ''),
+                },
+                errback=self.errback_handler
             )
-    
-    def errback_httpbin(self, failure):
-        """Handle request failures."""
+
+    def errback_handler(self, failure):
         self.logger.error(f"Request failed: {failure.request.url}")
-    
+
     def parse_works(self, response):
         """Parse works from ORCID API response."""
         orcid = response.meta['orcid']
         name = response.meta['name']
-        
+        department = response.meta.get('department', '')
+        faculty = response.meta.get('faculty', '')
+
         try:
             data = response.json()
             works = data.get('group', [])
-            
             self.logger.info(f"Found {len(works)} works for {name} (ORCID: {orcid})")
-            
+
             for work_group in works:
-                work_summary = work_group.get('work-summary', [])
-                if not work_summary:
+                work_summary_list = work_group.get('work-summary', [])
+                if not work_summary_list:
                     continue
-                
-                # Get first work summary
-                work = work_summary[0]
-                
+                work = work_summary_list[0]
+
                 title_data = work.get('title', {})
-                title = title_data.get('title', {}).get('value', '')
-                
+                title = (title_data.get('title', {}) or {}).get('value', '').strip()
                 if not title:
                     continue
-                
-                # Get external IDs (DOI, etc.)
-                external_ids = work.get('external-ids', {}).get('external-id', [])
+
+                # Get DOI from external IDs
                 doi = None
                 url = None
-                
-                for ext_id in external_ids:
+                for ext_id in (work.get('external-ids', {}) or {}).get('external-id', []):
                     if ext_id.get('external-id-type') == 'doi':
-                        doi = ext_id.get('external-id-value')
-                        url = f"https://doi.org/{doi}"
+                        doi = ext_id.get('external-id-value', '').strip()
+                        if doi:
+                            url = f"https://doi.org/{doi}"
                         break
-                
-                # Get publication date
-                pub_date = work.get('publication-date')
-                pub_year = pub_date.get('year', {}).get('value') if pub_date else None
-                
-                # Get journal/source
-                journal = work.get('journal-title', {}).get('value', '')
-                
+
+                # Publication date
+                pub_date_obj = work.get('publication-date') or {}
+                pub_year = (pub_date_obj.get('year', {}) or {}).get('value')
+                pub_date = f"{pub_year}-01-01" if pub_year else None
+
+                journal = (work.get('journal-title', {}) or {}).get('value', '')
+
                 yield {
                     'title': title,
-                    'authors': [name],  # We know this person is an author
+                    'authors': [name],
+                    'author_orcids': [orcid],
                     'doi': doi,
                     'url': url or f"https://orcid.org/{orcid}",
                     'source_repository': 'ORCID',
-                    'is_unilag_author': True,
-                    'raw_affiliation': 'University of Lagos',
+                    'is_unilag_author': True,  # Legacy field
+                    'raw_affiliation': self.institution_name,
                     'orcid': orcid,
-                    'publication_year': pub_year,
+                    'publication_date': pub_date,
                     'journal': journal,
-                    'abstract': ''  # ORCID doesn't provide abstracts
+                    'abstract': '',
+                    'institution': self.institution_name,
+                    'institution_ror': self.ror_id,
+                    'department': department,
+                    'faculty': faculty,
                 }
-                
         except Exception as e:
             self.logger.error(f"Error parsing works for {name}: {e}")

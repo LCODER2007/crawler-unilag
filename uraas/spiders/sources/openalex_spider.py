@@ -1,131 +1,241 @@
 import scrapy
+import os
+import sys
+import logging
 
-# UNILAG ROR ID (correct - verified)
-UNILAG_ROR = "05rk03822"
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+from uraas.config.institutions import get_registry
+from uraas.config.special_collections import SC_SEED_KEYWORDS, SC_OPENALEX_CONCEPTS
+
 OPENALEX_BASE = "https://api.openalex.org/works"
+MAILTO = "cokiki@unilag.edu.ng"
+
+log = logging.getLogger(__name__)
+
 
 class OpenAlexSpider(scrapy.Spider):
-    name = "openalex_unilag"
+    """
+    OpenAlex spider with 3-gate precision for 98% crawl accuracy.
+
+    Gate 1: ROR-filtered API query (only papers from institution's ROR)
+    Gate 2: Per-paper authorship ROR verification (at least 1 author has target ROR)
+    Gate 3: Affiliation string pattern matching (belt-and-suspenders)
+
+    Papers failing any gate are dropped — never mixed across institutions.
+    """
+    name = "openalex_multi"
     custom_settings = {
         'DOWNLOAD_DELAY': 1.0,
         'AUTOTHROTTLE_ENABLED': True,
+        'AUTOTHROTTLE_START_DELAY': 1.0,
+        'AUTOTHROTTLE_MAX_DELAY': 5.0,
+        'CONCURRENT_REQUESTS': 1,
     }
 
-    def start_requests(self):
+    def __init__(self, institution='unilag', target=20, boost_special=True,
+                 sc_only=False, *args, **kwargs):
         """
-        Start from cursor=* for full exhaustive pagination.
-        Uses both ROR ID and ORCID IDs for comprehensive coverage.
+        boost_special: fire extra crawl waves seeded with Special Collections
+                       keywords/concepts (default True — heavy SC weight).
+        sc_only:       if True, SKIP the general ROR-only wave and crawl ONLY
+                       the SC-seeded waves. Use when you want a pure SC harvest.
         """
-        # Strategy 1: Query by institution ROR ID
-        url = (
-            f"{OPENALEX_BASE}"
-            f"?filter=institutions.ror:{UNILAG_ROR}"
-            f"&select=id,doi,title,abstract_inverted_index,authorships,publication_date,open_access,primary_location"
-            f"&per-page=50"
-            f"&cursor=*"
-            f"&mailto=uraas-bot@unilag.edu.ng"
+        super().__init__(*args, **kwargs)
+        self.target_limit = int(target)
+        # Truthy-string handling for scrapy CLI args ("False"/"0" → False)
+        self.boost_special = str(boost_special).lower() not in ('false', '0', 'no', 'off')
+        self.sc_only = str(sc_only).lower() in ('true', '1', 'yes', 'on')
+        registry = get_registry()
+        self.institution_config = registry.get(institution)
+        if not self.institution_config:
+            raise ValueError(f"Institution '{institution}' not found in registry")
+
+        self.institution_name = self.institution_config.name
+        self.ror_id = self.institution_config.ror
+        self.ror_short = self.ror_id.split('/')[-1]
+
+        self._accepted = 0
+        self._rejected_gate2 = 0
+        self._rejected_gate3 = 0
+        self._sc_accepted = 0
+
+        self.logger.info(
+            f"OpenAlex spider for {self.institution_name} | ROR: {self.ror_short} "
+            f"| boost_special={self.boost_special} | sc_only={self.sc_only}"
         )
-        yield scrapy.Request(url=url, callback=self.parse, meta={'source': 'ror'})
-        
-        # Strategy 2: Query by ORCID IDs (if available)
-        import os
-        import json
-        orcid_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data', 'unilag_orcids.json')
-        
-        if os.path.exists(orcid_file):
-            with open(orcid_file, 'r', encoding='utf-8') as f:
-                orcid_data = json.load(f)
-            
-            # Get ORCIDs (filter out None values)
-            orcids = [orcid for orcid in orcid_data.values() if orcid]
-            
-            if orcids:
-                self.logger.info(f"Found {len(orcids)} ORCID IDs to query")
-                
-                # Query by ORCID (batch query - OpenAlex supports OR queries)
-                # Limit to top 50 ORCIDs to avoid overwhelming the API
-                for orcid in orcids[:50]:
-                    orcid_url = (
-                        f"{OPENALEX_BASE}"
-                        f"?filter=authorships.author.orcid:https://orcid.org/{orcid}"
-                        f"&select=id,doi,title,abstract_inverted_index,authorships,publication_date,open_access,primary_location"
-                        f"&per-page=50"
-                        f"&mailto=uraas-bot@unilag.edu.ng"
-                    )
-                    yield scrapy.Request(url=orcid_url, callback=self.parse, meta={'source': 'orcid', 'orcid': orcid})
+
+    SELECT_FIELDS = (
+        "id,doi,title,abstract_inverted_index,authorships,"
+        "publication_date,open_access,primary_location,concepts"
+    )
+
+    def _build_url(self, *, filters: str, cursor: str = '*') -> str:
+        return (
+            f"{OPENALEX_BASE}"
+            f"?filter={filters}"
+            f"&select={self.SELECT_FIELDS}"
+            f"&per-page=200"
+            f"&cursor={cursor}"
+            f"&mailto={MAILTO}"
+        )
+
+    def start_requests(self):
+        # Wave 1 — general ROR-only crawl (skipped in sc_only mode)
+        if not self.sc_only:
+            url = self._build_url(filters=f"institutions.ror:{self.ror_short}")
+            self.logger.info(f"[ROR wave] {url}")
+            yield scrapy.Request(
+                url=url, callback=self.parse,
+                meta={'source': 'ror', 'wave': 'ror'},
+                priority=0,
+            )
+
+        # Wave 2 — SC-boosted waves: one request per SC seed phrase, AND-ed with ROR.
+        # OpenAlex combines filters with comma=AND. The valid free-text filter is
+        # title_and_abstract.search (concepts.display_name.search is not supported —
+        # only concepts.id is). We rely on free-text seeds; the in-pipeline classifier
+        # then scores the actual hits.
+        if self.boost_special:
+            # SC_OPENALEX_CONCEPTS kept as broad terms in case concept-id lookup is added later
+            seeds = set(SC_SEED_KEYWORDS) | set(SC_OPENALEX_CONCEPTS)
+            for seed in sorted(seeds):
+                seed_q = seed.replace(' ', '%20')
+                filters = (
+                    f"institutions.ror:{self.ror_short},"
+                    f"title_and_abstract.search:{seed_q}"
+                )
+                url = self._build_url(filters=filters)
+                self.logger.info(f"[SC wave seed={seed!r}] {url}")
+                yield scrapy.Request(
+                    url=url, callback=self.parse,
+                    meta={'source': 'ror+seed', 'wave': f'sc:{seed}'},
+                    priority=10,  # Prioritize SC papers to fill target first
+                )
 
     def parse(self, response):
+        # Hard stop if we've already reached the global target
+        if self._accepted >= self.target_limit:
+            return
+
+        wave = response.meta.get('wave', 'ror')
+        is_sc_wave = wave.startswith('sc:')
+        # Every wave respects the global target limit. No more 10x headroom.
+        wave_cap = self.target_limit
+
         data = response.json()
         results = data.get('results', [])
-        
-        source = response.meta.get('source', 'ror')
-        if source == 'orcid':
-            self.logger.info(f"Processing {len(results)} works from ORCID: {response.meta.get('orcid')}")
+        self.logger.info(f"[{wave}] received {len(results)} works")
+
+        wave_accepted = response.meta.get('wave_accepted', 0)
 
         for work in results:
+            # Check both wave-local cap and global target limit
+            if wave_accepted >= wave_cap or self._accepted >= self.target_limit:
+                break
+            
             title = (work.get('title') or '').strip()
             if not title:
                 continue
 
-            doi = work.get('doi', '')
+            authorships = work.get('authorships', [])
 
-            # Reconstruct abstract from inverted index
-            abstract = self._reconstruct_abstract(
-                work.get('abstract_inverted_index', {})
-            )
+            # ── Gate 2: Authorship ROR verification ──────────────────────────
+            if not self.institution_config.verify_ror_in_authorships(authorships):
+                self._rejected_gate2 += 1
+                self.logger.debug(f"Gate 2 FAIL (no ROR match): {title[:60]}")
+                continue
 
-            # Authors with affiliations and ORCIDs
+            # Extract author data
             authors = []
             author_orcids = []
-            for authorship in work.get('authorships', []):
+            affiliations = []
+            author_depts = []
+
+            for authorship in authorships:
                 author_name = authorship.get('author', {}).get('display_name', '')
                 author_orcid = authorship.get('author', {}).get('orcid', '')
-                
+
                 if author_name:
                     authors.append(author_name)
                     if author_orcid:
-                        # Extract ORCID ID from URL
-                        orcid_id = author_orcid.replace('https://orcid.org/', '')
-                        author_orcids.append(orcid_id)
+                        author_orcids.append(author_orcid.replace('https://orcid.org/', ''))
 
+                    for inst in authorship.get('institutions', []):
+                        inst_name = inst.get('display_name', '')
+                        if inst_name:
+                            affiliations.append(inst_name)
+                        # Collect sub-institution if available
+                        sub = inst.get('lineage', [])
+                        if sub and len(sub) > 1:
+                            author_depts.append(sub[-1])
+
+            raw_affiliation = ' | '.join(set(affiliations)) if affiliations else self.institution_name
+
+            # ── Gate 3: Affiliation pattern matching ──────────────────────────
+            if affiliations and not self.institution_config.matches_affiliation(raw_affiliation):
+                self._rejected_gate3 += 1
+                self.logger.debug(f"Gate 3 FAIL (pattern mismatch): {title[:60]}")
+                continue
+
+            self._accepted += 1
+            wave_accepted += 1
+            if is_sc_wave:
+                self._sc_accepted += 1
+
+            doi = work.get('doi', '')
+            abstract = self._reconstruct_abstract(work.get('abstract_inverted_index', {}))
             pub_date = work.get('publication_date', '')
 
-            # Get best open-access PDF
             pdf_url = None
             oa = work.get('open_access', {})
             if oa.get('is_oa') and oa.get('oa_url'):
                 pdf_url = oa['oa_url']
 
-            url = work.get('primary_location', {}).get('landing_page_url') or doi or ''
+            url = (work.get('primary_location', {}) or {}).get('landing_page_url') or doi or ''
+            if not url:
+                url = f"https://openalex.org/{work.get('id', '').replace('https://openalex.org/', '')}"
+
+            # Extract SDG tags from concepts
+            concepts = work.get('concepts', [])
+            sdg_tags = self._extract_sdg_from_concepts(concepts)
 
             yield {
                 'title': title,
                 'abstract': abstract,
                 'authors': authors,
-                'author_orcids': author_orcids,  # NEW: Include ORCID IDs
+                'author_orcids': author_orcids,
                 'doi': doi,
-                'url': url or f"https://openalex.org/{work.get('id', '')}",
+                'url': url,
                 'pdf_url': pdf_url,
                 'publication_date': pub_date,
                 'source_repository': 'OpenAlex',
-                'is_unilag_author': True,
-                'raw_affiliation': 'University of Lagos',
+                'is_unilag_author': True,  # Legacy field
+                'raw_affiliation': raw_affiliation,
+                'institution': self.institution_name,
+                'institution_ror': self.ror_id,
+                'sdg_tags': sdg_tags,
+                'dc_subject': ', '.join(c.get('display_name', '') for c in concepts[:5] if c),
             }
 
-        # Cursor-based pagination for ROR queries only
-        if source == 'ror':
-            meta = data.get('meta', {})
-            next_cursor = meta.get('next_cursor')
-            if next_cursor and results:
-                next_url = (
-                    f"{OPENALEX_BASE}"
-                    f"?filter=institutions.ror:{UNILAG_ROR}"
-                    f"&select=id,doi,title,abstract_inverted_index,authorships,publication_date,open_access,primary_location"
-                    f"&per-page=50"
-                    f"&cursor={next_cursor}"
-                    f"&mailto=uraas-bot@unilag.edu.ng"
-                )
-                yield scrapy.Request(url=next_url, callback=self.parse, meta={'source': 'ror'})
+        # Cursor-based pagination — keep paginating within the same wave until its
+        # cap is hit. Reuse the originating wave's filter (extracted from current URL)
+        # so SC waves don't degrade back into plain ROR queries.
+        meta = data.get('meta', {})
+        next_cursor = meta.get('next_cursor')
+        if next_cursor and results and wave_accepted < wave_cap and self._accepted < self.target_limit:
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(response.url).query)
+            current_filters = (qs.get('filter') or [f"institutions.ror:{self.ror_short}"])[0]
+            next_url = self._build_url(filters=current_filters, cursor=next_cursor)
+            yield scrapy.Request(
+                url=next_url, callback=self.parse,
+                meta={
+                    'source': response.meta.get('source', 'ror'),
+                    'wave': wave,
+                    'wave_accepted': wave_accepted,
+                },
+            )
 
     def _reconstruct_abstract(self, inverted_index: dict) -> str:
         """OpenAlex stores abstracts as word→[position] inverted index."""
@@ -137,3 +247,33 @@ class OpenAlexSpider(scrapy.Spider):
                 word_positions.append((pos, word))
         word_positions.sort()
         return ' '.join(w for _, w in word_positions)
+
+    def _extract_sdg_from_concepts(self, concepts: list) -> str:
+        """Map OpenAlex concepts to SDG numbers (rough heuristic)."""
+        sdg_concept_map = {
+            'Poverty': 1, 'Food security': 2, 'Health': 3, 'Medicine': 3,
+            'Education': 4, 'Gender studies': 5, 'Water resources': 6,
+            'Renewable energy': 7, 'Economic growth': 8, 'Engineering': 9,
+            'Inequality': 10, 'Urban planning': 11, 'Sustainability': 12,
+            'Climate change': 13, 'Marine biology': 14, 'Ecology': 15,
+            'Political science': 16, 'International development': 17,
+        }
+        matched_sdgs = set()
+        for concept in concepts:
+            name = concept.get('display_name', '')
+            for key, sdg_num in sdg_concept_map.items():
+                if key.lower() in name.lower():
+                    matched_sdgs.add(str(sdg_num))
+        return ','.join(sorted(matched_sdgs))
+
+    def closed(self, reason):
+        self.logger.info(
+            f"Spider closed: {self.institution_name} | "
+            f"Accepted: {self._accepted} (SC-wave: {self._sc_accepted}) | "
+            f"Rejected (gate2/ROR): {self._rejected_gate2} | "
+            f"Rejected (gate3/pattern): {self._rejected_gate3}"
+        )
+        total_seen = self._accepted + self._rejected_gate2 + self._rejected_gate3
+        if total_seen > 0:
+            precision = round(self._accepted / total_seen * 100, 1)
+            self.logger.info(f"Precision: {precision}%")

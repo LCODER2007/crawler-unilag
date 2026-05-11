@@ -1,2 +1,30 @@
-# Local Netlify folder
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Databases
+*.db
+*.db-journal
+*.sqlite
+
+# URAAS Storage
+storage/
+data/
+logs/
+exports.csv
+senate.csv
+
+# IDEs
+.vscode/
+.idea/
+
+# Deployment
+.vercel
 .netlify
+.pytest_cache/
+pytest_out*

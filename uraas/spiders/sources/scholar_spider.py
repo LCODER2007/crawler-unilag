@@ -4,13 +4,41 @@ import uuid
 import time
 import random
 import os
+import sys
 import json
 
+# Add project root to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+from uraas.config.institutions import get_registry
+
 class ScholarSpider(scrapy.Spider):
-    name = "scholar_unilag"
+    name = "scholar_multi"
     custom_settings = {
         'DOWNLOAD_DELAY': 5.0,
     }
+
+    def __init__(self, institution='unilag', *args, **kwargs):
+        """
+        Initialize spider with institution parameter
+        
+        Args:
+            institution: Short name or ROR ID of institution (default: 'unilag')
+        """
+        super().__init__(*args, **kwargs)
+        
+        # Get institution configuration
+        registry = get_registry()
+        self.institution_config = registry.get(institution)
+        
+        if not self.institution_config:
+            raise ValueError(f"Institution '{institution}' not found in registry")
+        
+        self.institution_name = self.institution_config.name
+        self.ror_id = self.institution_config.ror
+        
+        self.logger.info(f"Initialized Scholar spider for {self.institution_name}")
+        self.logger.info(f"ROR ID: {self.ror_id}")
 
     def start_requests(self):
         # Set up free proxy rotation to avoid Google IP blocks
@@ -25,29 +53,23 @@ class ScholarSpider(scrapy.Spider):
         yield scrapy.Request(url="data:,", callback=self.fetch_scholarly)
 
     def fetch_scholarly(self, response):
-        staff_names = []
-        staff_cache = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'data', 'unilag_staff.json')
+        # Load staff names from institution config
+        staff_names = self.institution_config.staff_names
         
-        if os.path.exists(staff_cache):
-            try:
-                with open(staff_cache, 'r', encoding='utf-8') as f:
-                    staff_names = json.load(f)
-                self.logger.info(f"ScholarSpider: Loaded {len(staff_names)} staff names from cache.")
-            except Exception as e:
-                self.logger.error(f"ScholarSpider: Failed to load staff cache ({e})")
+        self.logger.info(f"ScholarSpider: Loaded {len(staff_names)} staff names for {self.institution_name}")
 
         if staff_names:
             # Targeted search for actual faculty members
             targets = random.sample(staff_names, min(len(staff_names), 5))
             for name in targets:
                 self.logger.info(f"ScholarSpider: Searching for faculty member: {name}")
-                query = scholarly.search_author(f"{name}, University of Lagos")
+                query = scholarly.search_author(f"{name}, {self.institution_name}")
                 yield from self._process_author_query(query)
                 time.sleep(random.uniform(5, 10)) # Polite delay
         else:
             # Fallback to generic institutional search
-            self.logger.info("ScholarSpider: No staff cache found. Performing generic institutional search.")
-            query = scholarly.search_author('University of Lagos')
+            self.logger.info(f"ScholarSpider: No staff cache found. Performing generic search for {self.institution_name}")
+            query = scholarly.search_author(self.institution_name)
             yield from self._process_author_query(query)
 
     def _process_author_query(self, query):
@@ -76,8 +98,11 @@ class ScholarSpider(scrapy.Spider):
                         'pdf_url': pub_filled.get('eprint_url', ''),
                         'url': pub_filled.get('pub_url', '') or f"https://scholar.google.com/#id={uuid.uuid4()}",
                         'source_repository': 'Google Scholar',
-                        'is_unilag_author': True,
-                        'raw_affiliation': 'University of Lagos'
+                        'is_unilag_author': True,  # Legacy field
+                        'raw_affiliation': self.institution_name,
+                        # NEW: Multi-institution support
+                        'institution': self.institution_name,
+                        'institution_ror': self.ror_id,
                     }
         except StopIteration:
             pass

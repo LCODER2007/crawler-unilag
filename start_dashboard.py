@@ -9,14 +9,16 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Now import and run the dashboard
+import uraas
+print(f"DEBUG: uraas path: {uraas.__path__}", flush=True)
 from uraas.dashboard.app import app, socketio
 from uraas.config import config
 
 if __name__ == '__main__':
-    print("=" * 70)
-    print("URAAS Dashboard Starting...")
-    print("=" * 70)
-    print(f"Dashboard URL: http://localhost:{config.DASHBOARD_PORT}")
-    print("Press Ctrl+C to stop")
-    print("=" * 70)
-    socketio.run(app, host='0.0.0.0', port=config.DASHBOARD_PORT, debug=False)
+    print("=" * 70, flush=True)
+    print("URAAS Dashboard Starting...", flush=True)
+    print("=" * 70, flush=True)
+    print(f"Dashboard URL: http://localhost:{config.DASHBOARD_PORT}", flush=True)
+    print("Press Ctrl+C to stop", flush=True)
+    print("=" * 70, flush=True)
+    socketio.run(app, host='0.0.0.0', port=config.DASHBOARD_PORT, debug=False, allow_unsafe_werkzeug=True)

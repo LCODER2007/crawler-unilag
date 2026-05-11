@@ -1,0 +1,35 @@
+{
+  "ror": "https://ror.org/038b8e254",
+  "name": "Addis Ababa University",
+  "short_name": "AddisAbaba",
+  "country": "Ethiopia",
+  "staff_file": "data/addisababa_staff.json",
+  "affiliation_patterns": [
+    "Addis Ababa University",
+    "AAU Ethiopia",
+    "Addis Abeba University",
+    "@aau.edu.et",
+    "Addis Ababa University, Ethiopia",
+    "Haile Selassie I University",
+    "AAU Addis"
+  ],
+  "faculties": [
+    "College of Business and Economics",
+    "College of Development Studies",
+    "College of Education and Behavioural Studies",
+    "College of Health Sciences",
+    "College of Humanities, Language Studies, Arts and Social Science",
+    "College of Law and Governance Studies",
+    "College of Natural and Computational Sciences",
+    "College of Social Sciences",
+    "College of Veterinary Medicine and Agriculture",
+    "School of Medicine",
+    "Institute of Technology"
+  ],
+  "crawler_settings": {
+    "rate_limit": 2.0,
+    "concurrent_requests": 8,
+    "retry_times": 3,
+    "download_delay": 2.0
+  }
+}

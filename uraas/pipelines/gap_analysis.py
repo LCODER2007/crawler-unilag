@@ -24,7 +24,7 @@ class GapAnalysisPipeline:
     def close_spider(self, spider):
         try:
             self.session.close()
-        except:
+        except Exception:
             pass
 
     def process_item(self, item, spider):

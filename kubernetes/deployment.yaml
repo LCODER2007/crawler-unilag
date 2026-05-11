@@ -1,0 +1,145 @@
+# URAAS Kubernetes Deployment Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uraas-app
+  labels:
+    app: uraas
+    component: app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: uraas
+      component: app
+  template:
+    metadata:
+      labels:
+        app: uraas
+        component: app
+    spec:
+      containers:
+      - name: uraas
+        image: uraas:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: uraas-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: uraas-secrets
+              key: redis-url
+        - name: DASHBOARD_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: uraas-secrets
+              key: secret-key
+        - name: FLASK_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /api/analytics/overview
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/analytics/overview
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: storage
+          mountPath: /app/storage
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: uraas-storage-pvc
+      - name: data
+        persistentVolumeClaim:
+          claimName: uraas-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uraas-service
+  labels:
+    app: uraas
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: uraas
+    component: app
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uraas-storage-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uraas-data-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: uraas-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: uraas-app
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

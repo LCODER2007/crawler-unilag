@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developers.openalex.org)",
+      "Bash(timeout 120 python scripts/crawl_multi_institution.py --target 2 --institutions unilag --spider openalex)"
+    ]
+  }
+}

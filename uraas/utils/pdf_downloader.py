@@ -100,7 +100,7 @@ class PDFDownloader:
     def _get_page_count(self, pdf_content: bytes) -> Optional[int]:
         try:
             return len(PyPDF2.PdfReader(BytesIO(pdf_content)).pages)
-        except:
+        except Exception:
             return None
     
     def extract_first_page_text(self, file_path: str) -> Optional[str]:
@@ -109,7 +109,7 @@ class PDFDownloader:
                 reader = PyPDF2.PdfReader(f)
                 if reader.pages:
                     return reader.pages[0].extract_text()
-        except:
+        except Exception:
             pass
         return None
 

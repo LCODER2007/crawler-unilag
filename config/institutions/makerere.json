@@ -1,0 +1,33 @@
+{
+  "ror": "https://ror.org/03dmz0111",
+  "name": "Makerere University",
+  "short_name": "Makerere",
+  "country": "Uganda",
+  "staff_file": "data/makerere_staff.json",
+  "affiliation_patterns": [
+    "Makerere University",
+    "Makerere Univ.",
+    "MAK",
+    "@mak.ac.ug",
+    "Makerere University, Uganda",
+    "Makerere University Kampala",
+    "MUAK"
+  ],
+  "faculties": [
+    "College of Agricultural and Environmental Sciences",
+    "College of Business and Management Sciences",
+    "College of Computing and Information Sciences",
+    "College of Education and External Studies",
+    "College of Engineering, Design, Art and Technology",
+    "College of Health Sciences",
+    "College of Humanities and Social Sciences",
+    "College of Natural Sciences",
+    "College of Veterinary Medicine"
+  ],
+  "crawler_settings": {
+    "rate_limit": 2.0,
+    "concurrent_requests": 8,
+    "retry_times": 3,
+    "download_delay": 2.0
+  }
+}

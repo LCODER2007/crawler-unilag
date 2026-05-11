@@ -1,20 +1,34 @@
 services:
+  # Web service running the Flask dashboard
   - type: web
     name: uraas-dashboard
-    runtime: python
+    env: python
+    region: oregon
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:$PORT uraas.dashboard.app:app
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && playwright install --with-deps chromium && python scripts/init_db.py && mkdir -p storage/pdfs"
+    startCommand: "gunicorn --config gunicorn_config.py uraas.dashboard.app:app"
+    healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: uraas-db
+          property: connectionString
       - key: DASHBOARD_SECRET_KEY
         generateValue: true
       - key: STORAGE_PATH
-        value: ./storage
-      - key: RATE_LIMIT_DELAY
-        value: 2.0
-      - key: MAX_DEPTH
-        value: 10
-      - key: CONCURRENT_REQUESTS
-        value: 16
+        value: "/opt/render/project/storage"
+      - key: RENDER
+        value: "true"
+    disk:
+      name: uraas-storage
+      mountPath: /opt/render/project/storage
+      sizeGB: 10
+
+databases:
+  # PostgreSQL database for storing research data
+  - name: uraas-db
+    databaseName: uraas_production
+    user: uraas_user
+    plan: free
