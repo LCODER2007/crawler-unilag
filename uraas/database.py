@@ -233,11 +233,7 @@ class CrawlJob(Base):
 
 
 # ── Indexes for query performance ─────────────────────────────────────────────
-Index("ix_items_docid", Item.docid)
-Index("ix_items_language", Item.language_code)
-Index("ix_items_content_type", Item.content_type)
-Index("ix_items_created_at", Item.created_at)
-Index("ix_authors_orcid", Author.orcid)
+# Note: defined inside table models via index=True to avoid duplicate-index errors
 
 
 # ── Engine & Session ──────────────────────────────────────────────────────────
@@ -257,4 +253,5 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    """Create all tables if they don't exist. Safe to call multiple times."""
+    Base.metadata.create_all(bind=engine, checkfirst=True)
