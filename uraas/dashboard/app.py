@@ -1,3 +1,7 @@
+import eventlet  # isort: skip
+
+eventlet.monkey_patch()
+
 import csv
 import io
 import logging
