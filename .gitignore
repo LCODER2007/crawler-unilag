@@ -28,3 +28,7 @@ senate.csv
 .netlify
 .pytest_cache/
 pytest_out*
+
+# Linting
+.mypy_cache/
+*.isorted
