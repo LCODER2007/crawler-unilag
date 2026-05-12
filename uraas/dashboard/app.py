@@ -1,6 +1,8 @@
-import eventlet  # isort: skip
-
-eventlet.monkey_patch()
+try:
+    import eventlet  # isort: skip
+    eventlet.monkey_patch()
+except ImportError:
+    pass
 
 import csv
 import io
