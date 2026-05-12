@@ -1,5 +1,6 @@
 try:
     import eventlet  # isort: skip
+
     eventlet.monkey_patch()
 except ImportError:
     pass
